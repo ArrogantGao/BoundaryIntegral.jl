@@ -1,0 +1,10 @@
+# This file is machine-generated - editing it directly is not advised
+
+julia_version = "1.12.1"
+manifest_format = "2.0"
+project_hash = "07f60b7acd60fa55ccbcc9446989ee63f7458540"
+
+[[deps.BoundaryIntegral]]
+path = "."
+uuid = "c5e3a73d-e4f2-41fa-921b-bb4fcd908115"
+version = "1.0.0-DEV"
