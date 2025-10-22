@@ -7,10 +7,10 @@ using FastGaussQuadrature
 export Surface
 
 # kernel functions
-export coulomb_En
+export laplace3d_doublelayer, laplace2d_doublelayer, laplace3d_singlelayer, laplace2d_singlelayer
 
 # geometries
-export uniform_box
+export uniform_box3d, uniform_box2d
 
 include("types.jl")
 
@@ -19,5 +19,8 @@ include("kernel/coulomb.jl")
 
 # geometries
 include("geometry/box.jl")
+
+# utilities
+include("utils/greens_identity.jl")
 
 end
