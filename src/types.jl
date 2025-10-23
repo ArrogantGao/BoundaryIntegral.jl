@@ -26,3 +26,17 @@ struct Surface{T, N}
 end
 
 Base.show(io::IO, s::Surface{T, N}) where {T, N} = print(io, "Surface in $N-dimensional space, with $(length(s.panels)) panels in $T")
+
+function num_points(surface::Surface{T, N}) where {T, N}
+    return sum(panel.n for panel in surface.panels)
+end
+
+function all_weights(surface::Surface{T, N}) where {T, N}
+    weights = Vector{T}()
+    for panel in surface.panels
+        for weight in panel.weights
+            push!(weights, weight)
+        end
+    end
+    return weights
+end

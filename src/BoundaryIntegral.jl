@@ -1,7 +1,9 @@
 module BoundaryIntegral
 
-using LinearAlgebra
+using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
+
+using Plots
 
 #core types
 export Surface
@@ -22,5 +24,11 @@ include("geometry/box.jl")
 
 # utilities
 include("utils/greens_identity.jl")
+
+# solvers
+include("solver/dielectric_box.jl")
+
+# visualization
+include("visualization/viz_2d.jl")
 
 end
