@@ -43,3 +43,20 @@ function l2d_singlelayer_gi(interface::Interface{T, 2}, sigma::Vector{T}, radius
 
     return s
 end
+
+function l2d_singlelayer_gi(dbox::DielectricInterfaces{T, 2}, sigma::Vector{T}, radius::T, ns::Int) where T
+    s = zero(T)
+    dl = 2π * radius / ns
+
+    for theta in 0:2π/ns:(2π-2π/ns)
+        cs = (cos(theta), sin(theta))
+        rs = (radius * cs[1], radius * cs[2])
+
+        t = zero(T)
+        for point in eachpoint(dbox)
+            t += laplace2d_doublelayer(point.point, rs, cs) * point.weight * sigma[point.global_idx]
+        end
+        s += t * dl
+    end
+    return s
+end

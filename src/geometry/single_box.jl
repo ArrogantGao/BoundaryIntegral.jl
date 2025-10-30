@@ -40,30 +40,8 @@ function box2d_adaptive_panels(n_panels::Int, n_quad::Int, n_adapt::Int, ::Type{
 
     for (sp, ep, normal) in zip([(-t1, t1), (t1, t1), (t1, -t1), (-t1, -t1)], [(t1, t1), (t1, -t1), (-t1, -t1), (-t1, t1)], [(t0, t1), (t1, t0), (t0, -t1), (-t1, t0)])
 
-        dt = (ep .- sp) ./ n_panels
-        # adaptively refine the [-t1, -t1 + dt]
-        t_start = sp .+ dt
-        for i in 1:n_adapt-1
-            t_end = t_start
-            t_start = t_end .- dt ./ T(2^i)
-            push!(panels, straight_line_panel(t_start, t_end, ns, ws, normal))
-        end
-        push!(panels, straight_line_panel(sp, t_start, ns, ws, normal))
-
-        for i in 2:n_panels-1
-            p_start = sp .+ (ep .- sp) .* (i - 1) ./ n_panels
-            p_end = sp .+ (ep .- sp) .* i ./ n_panels
-            push!(panels, straight_line_panel(p_start, p_end, ns, ws, normal))
-        end
-
-        # adaptively refine the [t1 - dt, t1]
-        t_end = ep .- dt
-        for i in 1:n_adapt-1
-            t_start = t_end
-            t_end = t_start .+ dt ./ T(2^i)
-            push!(panels, straight_line_panel(t_start, t_end, ns, ws, normal))
-        end
-        push!(panels, straight_line_panel(t_end, ep, ns, ws, normal))
+        new_panels = straight_line_adaptive_panels(sp, ep, ns, ws, normal, n_panels, n_adapt)
+        append!(panels, new_panels)
     end
 
     return Interface(length(panels), panels)

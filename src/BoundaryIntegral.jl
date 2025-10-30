@@ -3,7 +3,7 @@ module BoundaryIntegral
 using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
 
-using CairoMakie
+using GLMakie
 
 #core types
 export Interface

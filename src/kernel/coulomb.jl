@@ -60,3 +60,16 @@ function laplace2d_DT(interface::Interface{T, 2}) where{T}
     end
     return DT
 end
+
+function laplace2d_DT(dielectric_interfaces::DielectricInterfaces{T, 2}) where T
+    n_points = num_points(dielectric_interfaces)
+
+    DT = zeros(T, n_points, n_points)
+    for (i, pointi) in enumerate(eachpoint(dielectric_interfaces))
+        for (j, pointj) in enumerate(eachpoint(dielectric_interfaces))
+            i == j && continue
+            DT[i, j] = laplace2d_doublelayer(pointj.point, pointi.point, pointi.normal)
+        end
+    end
+    return DT
+end
