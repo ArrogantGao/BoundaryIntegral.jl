@@ -1,0 +1,27 @@
+using BoundaryIntegral
+import BoundaryIntegral as BI
+using LinearAlgebra, OMEinsum
+using Test
+
+@testset "dielectric_box" begin
+    eps_box = 2.0
+    box1 = BI.dielectric_box2d(8,16, Float64, adapt = false)
+    box2 = BI.dielectric_box2d(8,16, Float64, adapt = true)
+
+    lhs1 = BI.Lhs_dielectric_box2d(eps_box, box1)
+    lhs2 = BI.Lhs_dielectric_box2d(eps_box, box2)
+    rhs1 = BI.Rhs_dielectric_box2d(eps_box, box1, (0.1, 0.1))
+    rhs2 = BI.Rhs_dielectric_box2d(eps_box, box2, (0.1, 0.1))
+
+    x1 = BI.solve_lu(lhs1, rhs1)
+    x2 = BI.solve_lu(lhs2, rhs2)
+
+    @test norm(lhs1 * x1 - rhs1) < 1e-10
+    @test norm(lhs2 * x2 - rhs2) < 1e-10
+
+    g1 = BI.l2d_singlelayer_gi(box1, x1, 2.0, 32) + 1.0 / eps_box
+    g2 = BI.l2d_singlelayer_gi(box2, x2, 2.0, 32) + 1.0 / eps_box
+
+    @test isapprox(g1, 1.0, atol = 1e-4)
+    @test isapprox(g2, 1.0, atol = 1e-4)
+end

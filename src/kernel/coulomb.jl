@@ -12,10 +12,10 @@ function laplace2d_singlelayer(src::NTuple{2, T}, trg::NTuple{2, T}) where T
     return - log(r) / 2π
 end
 
-function laplace2d_singlelayer_surface(surface::Surface{T, 2}, sigma::Vector{T}, trg::NTuple{2, T}) where T
+function laplace2d_singlelayer_interface(interface::Interface{T, 2}, sigma::Vector{T}, trg::NTuple{2, T}) where T
     t = 0.0
     i = 0
-    for panel in surface.panels
+    for panel in interface.panels
         for (point, weight) in zip(panel.points, panel.weights)
             i += 1
             t += laplace2d_singlelayer(point, trg) * weight * sigma[i]
@@ -40,16 +40,16 @@ function laplace2d_doublelayer(src::NTuple{2, T}, trg::NTuple{2, T}, norm::NTupl
     return dot(norm, inv_r2 .* (trg .- src)) / 2π
 end
 
-function laplace2d_DT(surface::Surface{T, 2}) where{T}
-    n_points = num_points(surface)
+function laplace2d_DT(interface::Interface{T, 2}) where{T}
+    n_points = num_points(interface)
 
     DT = zeros(T, n_points, n_points)
     i_offset = 0;
-    for paneli in surface.panels
+    for paneli in interface.panels
         for (i, pointi) in enumerate(paneli.points)
             i_offset += 1
             j_offset = 0;
-            for panelj in surface.panels
+            for panelj in interface.panels
                 for (j, pointj) in enumerate(panelj.points)
                     j_offset += 1
                     i_offset == j_offset && continue

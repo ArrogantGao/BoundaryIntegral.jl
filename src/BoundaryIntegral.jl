@@ -6,7 +6,7 @@ using FastGaussQuadrature
 using CairoMakie
 
 #core types
-export Surface
+export Interface
 
 # kernel functions
 export laplace3d_doublelayer, laplace2d_doublelayer, laplace3d_singlelayer, laplace2d_singlelayer
@@ -23,7 +23,8 @@ include("types.jl")
 include("kernel/coulomb.jl")
 
 # geometries
-include("geometry/box.jl")
+include("geometry/single_box.jl")
+include("geometry/multi_box.jl")
 
 # utilities
 include("utils/greens_identity.jl")

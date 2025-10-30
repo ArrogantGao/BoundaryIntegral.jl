@@ -1,4 +1,4 @@
-function viz_2d_surface(surface::Surface{T, 2}) where T
+function viz_2d_interface(interface::Interface{T, 2}) where T
     fig = Figure(size=(600, 600))
     ax = Axis(fig[1, 1])
 
@@ -7,7 +7,7 @@ function viz_2d_surface(surface::Surface{T, 2}) where T
     weights = T[]
     colors = T[]
 
-    for (i, panel) in enumerate(surface.panels)
+    for (i, panel) in enumerate(interface.panels)
         for (point, weight) in zip(panel.points, panel.weights)
             push!(xs, point[1])
             push!(ys, point[2])

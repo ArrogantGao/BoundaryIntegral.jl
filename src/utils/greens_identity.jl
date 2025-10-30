@@ -1,6 +1,6 @@
-function l2d_point_gi(surface::Surface{T, 2}, src::NTuple{2, T}) where T
+function l2d_point_gi(interface::Interface{T, 2}, src::NTuple{2, T}) where T
     t = 0.0
-    for panel in surface.panels
+    for panel in interface.panels
         for (point, weight) in zip(panel.points, panel.weights)
             t += laplace2d_doublelayer(src, point, panel.normal) * weight
         end
@@ -19,8 +19,8 @@ function l2d_sphere_gi(radius::T, ns::Int, src::NTuple{2, T}) where T
     return t
 end
 
-# integrate the single layer potential over the surface on a sphere
-function l2d_singlelayer_gi(surface::Surface{T, 2}, sigma::Vector{T}, radius::T, ns::Int) where T
+# integrate the single layer potential over the interface on a sphere
+function l2d_singlelayer_gi(interface::Interface{T, 2}, sigma::Vector{T}, radius::T, ns::Int) where T
     s = zero(T)
     dl = 2π * radius / ns
 
@@ -31,7 +31,7 @@ function l2d_singlelayer_gi(surface::Surface{T, 2}, sigma::Vector{T}, radius::T,
         t = zero(T)
 
         i_offset = 0
-        for panel in surface.panels
+        for panel in interface.panels
             for (point, weight) in zip(panel.points, panel.weights)
                 i_offset += 1
                 t += laplace2d_doublelayer(point, rs, cs) * weight * sigma[i_offset]
