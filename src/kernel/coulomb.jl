@@ -12,6 +12,19 @@ function laplace2d_singlelayer(src::NTuple{2, T}, trg::NTuple{2, T}) where T
     return - log(r) / 2π
 end
 
+function laplace2d_singlelayer_surface(surface::Surface{T, 2}, sigma::Vector{T}, trg::NTuple{2, T}) where T
+    t = 0.0
+    i = 0
+    for panel in surface.panels
+        for (point, weight) in zip(panel.points, panel.weights)
+            i += 1
+            t += laplace2d_singlelayer(point, trg) * weight * sigma[i]
+        end
+    end
+    return t
+end
+
+
 function laplace3d_doublelayer(src::NTuple{3, T}, trg::NTuple{3, T}, norm::NTuple{3, T}) where T
     r2 = sum((src .- trg).^2)
     r = sqrt(r2)

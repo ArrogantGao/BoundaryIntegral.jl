@@ -1,0 +1,1 @@
+solve_lu(A::AbstractMatrix, b::AbstractVector) = lu(A) \ b

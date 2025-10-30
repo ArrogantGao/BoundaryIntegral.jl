@@ -3,7 +3,7 @@ module BoundaryIntegral
 using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
 
-using Plots
+using CairoMakie
 
 #core types
 export Surface
@@ -13,6 +13,9 @@ export laplace3d_doublelayer, laplace2d_doublelayer, laplace3d_singlelayer, lapl
 
 # geometries
 export uniform_box3d, uniform_box2d
+
+# linear algebra
+export solve_lu
 
 include("types.jl")
 
@@ -24,6 +27,7 @@ include("geometry/box.jl")
 
 # utilities
 include("utils/greens_identity.jl")
+include("utils/linear_algebra.jl")
 
 # solvers
 include("solver/dielectric_box.jl")
