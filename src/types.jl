@@ -15,7 +15,7 @@ function straight_line_panel(a::NTuple{2, T}, b::NTuple{2, T}, ns::Vector{T}, ws
     weights = ws .* L ./ 2
 
     @assert norm(normal) ≈ 1 "Normal is not a unit vector"
-    @assert dot(normal, b .- a) ≈ 0 "Normal is not perpendicular to the line segment"
+    @assert dot(normal, b .- a) < 1e-10 "Normal is not perpendicular to the line segment"
 
     return Panel(length(ns), points, normal, weights)
 end

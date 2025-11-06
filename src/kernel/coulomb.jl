@@ -24,6 +24,14 @@ function laplace2d_singlelayer_interface(interface::Interface{T, 2}, sigma::Vect
     return t
 end
 
+function laplace2d_singlelayer_interface(dielectric_interfaces::DielectricInterfaces{T, 2}, sigma::Vector{T}, trg::NTuple{2, T}) where T
+    t = 0.0
+    for (i, pointi) in enumerate(eachpoint(dielectric_interfaces))
+        t += laplace2d_singlelayer(pointi.point, trg) * pointi.weight * sigma[i]
+    end
+    return t
+end
+
 
 function laplace3d_doublelayer(src::NTuple{3, T}, trg::NTuple{3, T}, norm::NTuple{3, T}) where T
     r2 = sum((src .- trg).^2)
