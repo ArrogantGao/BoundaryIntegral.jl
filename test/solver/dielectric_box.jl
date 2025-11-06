@@ -26,7 +26,7 @@ using Test
     @test isapprox(g2, 1.0, atol = 1e-4)
 end
 
-@testset "dielectric_dbox" begin
+@testset "2 dielectric box" begin
     eps_box1 = 2.0
     eps_box2 = 3.0
     dbox = BI.dielectric_dbox2d(eps_box1, eps_box2, 8, 16, 2)
@@ -38,5 +38,23 @@ end
     @test norm(lhs * x - rhs) < 1e-10
 
     g = BI.l2d_singlelayer_gi(dbox, x, 2.0, 32) + 1.0 / eps_box2
+    @test isapprox(g, 1.0, atol = 1e-4)
+end
+
+@testset "2 dielectric box" begin
+    eps_box1 = 2.0
+    eps_box2 = 3.0
+    eps_box3 = 4.0
+    
+    rects = [BI.square(-1.0, -1.0), BI.square(0.0, -1.0), BI.square(-0.5, 0.0)]
+    mbox = BI.dielectric_mbox2d([eps_box1, eps_box2, eps_box3], rects, 8, 16, 5)
+
+    lhs = BI.Lhs_dielectric_mbox2d(mbox)
+    rhs = BI.Rhs_dielectric_mbox2d(mbox, (0.0, 0.5), eps_box3)
+
+    x = BI.solve_lu(lhs, rhs)
+    @test norm(lhs * x - rhs) < 1e-10
+
+    g = BI.l2d_singlelayer_gi(mbox, x, 2.0, 32) + 1.0 / eps_box3
     @test isapprox(g, 1.0, atol = 1e-4)
 end

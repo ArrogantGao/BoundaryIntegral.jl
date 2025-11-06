@@ -16,7 +16,18 @@ end
 
 function dielectric_dbox2d(eps_box1::T, eps_box2::T, n_panels::Int, n_quad::Int, n_adapt::Int) where T
     i1, i2, i12 = dbox2d_adaptive_panels(n_panels, n_quad, n_adapt, T)
-    di = [(i1, eps_box1, one(T)), (i2, eps_box2, one(T)), (i12, eps_box1, eps_box2)]
+    di = [(i1, eps_box1, one(T)), (i2, eps_box2, one(T)), (i12, eps_box2, eps_box1)]
+    return DielectricInterfaces(length(di), di)
+end
+
+function dielectric_mbox2d(eps::Vector{T}, vec_boxes::Vector{Vector{NTuple{2, T}}}, n_panels::Int, n_quad::Int, n_adapt::Int) where T
+    interfaces_dict = multi_box2d(n_panels, n_quad, n_adapt, vec_boxes, T)
+    eps_dict = Dict{Int, T}()
+    for (id, eps_i) in enumerate(eps)
+        eps_dict[id] = eps_i
+    end
+    eps_dict[0] = one(T)
+    di = [(interfaces_dict[(id1, id2)], eps_dict[id1], eps_dict[id2]) for (id1, id2) in keys(interfaces_dict)]
     return DielectricInterfaces(length(di), di)
 end
 
