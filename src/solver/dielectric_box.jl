@@ -5,7 +5,7 @@ end
 
 function Lhs_dielectric_box2d(eps_box::T, box::Interface{T, 2}) where T
     D_transpose = laplace2d_DT(box)
-    Lhs = I(num_points(box)) * 0.5 * (1.0 + eps_box) / (1.0 - eps_box) + ein"ij,j->ij"(D_transpose, all_weights(box))
+    Lhs = I(num_points(box)) * 0.5 * (1.0 + eps_box) / (1.0 - eps_box) + D_transpose
     return Lhs
 end
 
@@ -33,7 +33,7 @@ end
 
 function Lhs_dielectric_mbox2d(dbox::DielectricInterfaces{T, 2}) where T
     D_transpose = laplace2d_DT(dbox)
-    Lhs = ein"ij,j->ij"(D_transpose, all_weights(dbox))
+    Lhs = D_transpose
     offset = 0
     for (interface, eps_in, eps_out) in dbox.interfaces
         t = 0.5 * (eps_out + eps_in) / (eps_out - eps_in)
@@ -42,6 +42,24 @@ function Lhs_dielectric_mbox2d(dbox::DielectricInterfaces{T, 2}) where T
         end
         offset += num_points(interface)
     end
+    return Lhs
+end
+
+function Lhs_dielectric_mbox2d_fmm2d(dbox::DielectricInterfaces{T, 2}, tol::Float64 = 1e-12) where T
+    D_transpose = laplace2d_DT_fmm2d(dbox, tol)
+
+    diag_terms = zeros(T, num_points(dbox))
+    offset = 0
+    for (interface, eps_in, eps_out) in dbox.interfaces
+        t = 0.5 * (eps_out + eps_in) / (eps_out - eps_in)
+        for i in 1:num_points(interface)
+            diag_terms[offset + i] = t
+        end
+        offset += num_points(interface)
+    end
+
+    Lhs = D_transpose + LinearMap(x -> diagm(diag_terms) * x, num_points(dbox), num_points(dbox))
+
     return Lhs
 end
 

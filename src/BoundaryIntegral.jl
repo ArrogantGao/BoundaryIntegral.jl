@@ -2,6 +2,9 @@ module BoundaryIntegral
 
 using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
+using IterativeSolvers, LinearMaps
+
+using FMM2D
 
 #core types
 export Interface
@@ -13,7 +16,7 @@ export laplace3d_doublelayer, laplace2d_doublelayer, laplace3d_singlelayer, lapl
 export uniform_box3d, uniform_box2d
 
 # linear algebra
-export solve_lu
+export solve_lu, solve_gmres
 
 # visualization
 export viz_2d_interfaces, viz_2d_dielectric_interfaces
@@ -22,6 +25,7 @@ include("types.jl")
 
 # kernel functions
 include("kernel/coulomb.jl")
+include("kernel/kernelabstractions.jl")
 
 # geometries
 include("geometry/single_box.jl")
