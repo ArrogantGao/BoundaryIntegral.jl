@@ -3,8 +3,6 @@ module BoundaryIntegral
 using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
 
-using GLMakie
-
 #core types
 export Interface
 
@@ -16,6 +14,9 @@ export uniform_box3d, uniform_box2d
 
 # linear algebra
 export solve_lu
+
+# visualization
+export viz_2d_interfaces, viz_2d_dielectric_interfaces
 
 include("types.jl")
 

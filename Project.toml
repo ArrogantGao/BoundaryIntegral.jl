@@ -5,10 +5,15 @@ authors = ["Xuanzhao Gao <xgao@flatironinstitute.org> and contributors"]
 
 [deps]
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922"
 SparseMatricesCOO = "fa32481b-f100-4b48-8dc8-c62f61b13870"
+
+[weakdeps]
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+
+[extensions]
+GLMakieExt = ["GLMakie"]
 
 [compat]
 FastGaussQuadrature = "1.1.0"
