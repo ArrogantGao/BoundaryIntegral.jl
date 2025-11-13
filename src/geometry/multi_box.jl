@@ -32,6 +32,9 @@ rect = (x, y, w, h) -> [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
 function multi_box2d(n_panels::Int, n_quad::Int, n_adapt::Int, vec_boxes::Vector{Vector{NTuple{2, T}}}, ::Type{T} = Float64) where T
     ns, ws = gausslegendre(n_quad)
 
+    ns = T.(ns)
+    ws = T.(ws)
+
     edges = build_edges(vec_boxes)
     interfaces_dict = Dict{Tuple{Int, Int}, Interface{T, 2}}()
     for (p1, p2, id1, id2, nvec) in edges
@@ -158,7 +161,7 @@ end
 
 function build_edges(rects::Vector{Vector{NTuple{2,T}}}) where T
     edges = []
-    shared_edges = Dict{Tuple{NTuple{2,Float64},NTuple{2,Float64}}, Vector{Int}}()
+    shared_edges = Dict{Tuple{NTuple{2,T},NTuple{2,T}}, Vector{Int}}()
 
     # find all shared edges and record them
     for i in 1:length(rects)-1

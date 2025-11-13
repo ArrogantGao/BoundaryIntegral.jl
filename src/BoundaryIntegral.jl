@@ -2,9 +2,14 @@ module BoundaryIntegral
 
 using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
-using IterativeSolvers, LinearMaps
+using IterativeSolvers, Krylov, LinearMaps
 
 using FMM2D
+
+using KernelAbstractions, Adapt
+include(joinpath(dirname(pathof(KernelAbstractions)), "../examples/utils.jl")) # Load backend
+
+using CUDA
 
 #core types
 export Interface

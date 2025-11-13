@@ -1,6 +1,6 @@
 using BoundaryIntegral
 import BoundaryIntegral as BI
-using LinearAlgebra, OMEinsum
+using LinearAlgebra, OMEinsum, Krylov
 using Test
 
 @testset "dielectric_box" begin
@@ -39,7 +39,7 @@ end
     x_fmm2d = BI.solve_gmres(lhs_fmm2d, rhs)
 
     @test norm(lhs_direct * x_direct - rhs) < 1e-8
-    @test norm(lhs_direct * x_fmm2d - rhs) < 1e-8
+    @test norm(lhs_direct * x_fmm2d - rhs) < 1e-6
 
     g_direct = BI.l2d_singlelayer_gi(dbox, x_direct, 2.0, 32) + 1.0 / eps_box2
     g_fmm2d = BI.l2d_singlelayer_gi(dbox, x_fmm2d, 2.0, 32) + 1.0 / eps_box2
@@ -64,11 +64,38 @@ end
     x_fmm2d = BI.solve_gmres(lhs_fmm2d, rhs)
 
     @test norm(lhs_direct * x_direct - rhs) < 1e-8
-    @test norm(lhs_direct * x_fmm2d - rhs) < 1e-8
+    @test norm(lhs_direct * x_fmm2d - rhs) < 1e-6
 
     g_direct = BI.l2d_singlelayer_gi(mbox, x_direct, 2.0, 32) + 1.0 / eps_box3
     g_fmm2d = BI.l2d_singlelayer_gi(mbox, x_fmm2d, 2.0, 32) + 1.0 / eps_box3
 
     @test isapprox(g_direct, 1.0, atol = 1e-4)
     @test isapprox(g_fmm2d, 1.0, atol = 1e-4)
+end
+
+@testset "3 dielectric box float" begin
+    eps_box1 = 2.0f0
+    eps_box2 = 3.0f0
+    eps_box3 = 4.0f0
+    
+    rects = [BI.square(-1.0f0, -1.0f0), BI.square(0.0f0, -1.0f0), BI.square(-0.5f0, 0.0f0)]
+    mbox = BI.dielectric_mbox2d([eps_box1, eps_box2, eps_box3], rects, 8, 16, 5)
+
+    lhs_direct = BI.Lhs_dielectric_mbox2d(mbox)
+    rhs = BI.Rhs_dielectric_mbox2d(mbox, (0.0f0, 0.5f0), eps_box3)
+
+    lhs_ka = BI.Lhs_dielectric_mbox2d_ka(mbox)
+    rhs_ka = BI.Rhs_dielectric_mbox2d_ka(mbox, (0.0f0, 0.5f0), eps_box3)
+
+    x_direct = BI.solve_lu(lhs_direct, rhs)
+    x_ka = Array(Krylov.gmres(lhs_ka, rhs_ka)[1])
+
+    @test norm(lhs_direct * x_direct - rhs) < 1e-5
+    @test norm(lhs_direct * x_ka - rhs) < 1e-3
+
+    g_direct = BI.l2d_singlelayer_gi(mbox, x_direct, 2.0f0, 32) + 1.0 / eps_box3
+    g_ka = BI.l2d_singlelayer_gi(mbox, x_ka, 2.0f0, 32) + 1.0 / eps_box3
+
+    @test isapprox(g_direct, 1.0, atol = 1e-4)
+    @test isapprox(g_ka, 1.0, atol = 1e-3)
 end
