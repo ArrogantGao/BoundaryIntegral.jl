@@ -6,10 +6,9 @@ using IterativeSolvers, Krylov, LinearMaps
 
 using FMM2D
 
+using CUDA
 using KernelAbstractions, Adapt
 include(joinpath(dirname(pathof(KernelAbstractions)), "../examples/utils.jl")) # Load backend
-
-using CUDA
 
 #core types
 export Interface
