@@ -5,7 +5,6 @@ authors = ["Xuanzhao Gao <xgao@flatironinstitute.org> and contributors"]
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 FMM2D = "2d63477d-9690-4b75-bcc1-c3461d43fecc"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 IterativeSolvers = "42fd0dbc-a981-5370-80f2-aaf504508153"
@@ -14,12 +13,15 @@ Krylov = "ba0b0d4f-ebba-5204-a429-3ac8c609bfb7"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
 OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 SparseMatricesCOO = "fa32481b-f100-4b48-8dc8-c62f61b13870"
 
 [weakdeps]
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 
 [extensions]
+CUDAExt = ["CUDA"]
 GLMakieExt = ["GLMakie"]
 
 [compat]
@@ -34,6 +36,7 @@ Krylov = "0.10.2"
 LinearAlgebra = "1.12.0"
 LinearMaps = "3.11.4"
 OMEinsum = "0.9.2"
+Roots = "2.2.10"
 SparseMatricesCOO = "0.2.6"
 julia = "1.10, 1.11, 1.12"
 

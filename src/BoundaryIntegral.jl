@@ -2,11 +2,10 @@ module BoundaryIntegral
 
 using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
-using IterativeSolvers, Krylov, LinearMaps
+using Krylov, LinearMaps, Roots
 
 using FMM2D
 
-using CUDA
 using KernelAbstractions, Adapt
 include(joinpath(dirname(pathof(KernelAbstractions)), "../examples/utils.jl")) # Load backend
 
@@ -38,6 +37,7 @@ include("geometry/multi_box.jl")
 # utilities
 include("utils/greens_identity.jl")
 include("utils/linear_algebra.jl")
+include("utils/corner_singularity.jl")
 
 # solvers
 include("solver/dielectric_box.jl")
