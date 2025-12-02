@@ -4,7 +4,7 @@ using LinearAlgebra, OMEinsum
 using FastGaussQuadrature
 using Krylov, LinearMaps, Roots
 
-using FMM2D
+using FMM2D, FMM3D
 
 using KernelAbstractions, Adapt
 include(joinpath(dirname(pathof(KernelAbstractions)), "../examples/utils.jl")) # Load backend
@@ -23,12 +23,13 @@ export solve_lu, solve_gmres
 
 # visualization
 export viz_2d_interfaces, viz_2d_dielectric_interfaces
-export viz_3d_squares
+export viz_3d_squares, viz_3d_interface
 
 include("types.jl")
 
 # kernel functions
-include("kernel/coulomb.jl")
+include("kernel/laplace2d.jl")
+include("kernel/laplace3d.jl")
 include("kernel/kernelabstractions.jl")
 
 # geometries
@@ -41,7 +42,8 @@ include("utils/linear_algebra.jl")
 include("utils/corner_singularity.jl")
 
 # solvers
-include("solver/dielectric_box.jl")
+include("solver/dielectric_box2d.jl")
+include("solver/dielectric_box3d.jl")
 
 # visualization
 include("visualization/viz_2d.jl")

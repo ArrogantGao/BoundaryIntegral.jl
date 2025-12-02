@@ -36,23 +36,12 @@ end
 
 function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns::Vector{T}, ws::Vector{T}, normal::NTuple{3, T}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, n_adapt_edge::Int, n_adapt_corner::Int) where T
 
-    # no edges or corners
-    all(isfalse.(is_edge)) && all(isfalse.(is_corner)) && return [square_surface_uniform_panel(a, b, c, d, ns, ws, normal)]
-
-    # check the correctness of the is_edge and is_corner, a corner always leads to two edges, inv does not need to hold
-    for i in 1:4
-        is_corner[i] && (@assert is_edge[i] && is_edge[mod1(i + 1, 4)] "A corner must lead to two edges")
-    end
-
     @assert n_adapt_edge <= n_adapt_corner "n_adapt_edge must be less than or equal to n_adapt_corner"
 
     squares = Vector{NTuple{4, NTuple{3, T}}}()
 
     # first handle the edges
-    _square_surface_edge!(squares, (a, b, c, d), is_edge, n_adapt_edge)
-
-    # then for the corners
-    # do not handle corners differently now
+    _square_surfaces!(squares, (a, b, c, d), is_edge, is_corner, n_adapt_edge, n_adapt_corner)
 
     panels = Vector{Panel{T, 3}}()
     for square in squares
@@ -63,7 +52,7 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
 end
 
 # after one step of adaptation, there are at most two edges with singularity
-function _square_surface!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple{4, NTuple{3, T}}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, edge_depth::Int, corner_depth::Int) where T
+function _square_surfaces!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple{4, NTuple{3, T}}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, edge_depth::Int, corner_depth::Int) where T
 
     if (!any(is_edge) && !any(is_corner)) || (edge_depth == 0 && corner_depth == 0)
         push!(squares, abcd)
@@ -95,7 +84,7 @@ function _square_surface!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple
                     dummy_is_edge = (false, false, false, false) # no further edge refinement needed
                     new_is_corner_mut = [false, false, false, false]
                     new_is_corner_mut[i] = true
-                    _square_surface!(squares, sub_squares[i], dummy_is_edge, Tuple(new_is_corner_mut), 0, corner_depth - 1)
+                    _square_surfaces!(squares, sub_squares[i], dummy_is_edge, Tuple(new_is_corner_mut), 0, corner_depth - 1)
                 end
             end
         end
@@ -111,7 +100,7 @@ function _square_surface!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple
             new_is_edge_mut[j] = is_edge[j]
             new_is_edge = Tuple(new_is_edge_mut)
 
-            _square_surface!(squares, sub_squares[i], new_is_edge, new_is_corner, edge_depth - 1, corner_depth - 1)
+            _square_surfaces!(squares, sub_squares[i], new_is_edge, new_is_corner, edge_depth - 1, corner_depth - 1)
         end
     end
 
@@ -119,3 +108,53 @@ function _square_surface!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple
 end
 
 # first try to mesh a single box
+function single_box3d(n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+    ns, ws = gausslegendre(n_quad)
+
+    t1 = one(T)
+    t0 = zero(T)
+    is_edge = (true, true, true, true)
+    is_corner = (true, true, true, true)
+
+    vertices = [
+        ( t1,  t1,  t1),  # 1: A
+        (-t1,  t1,  t1),  # 2: B
+        (-t1, -t1,  t1),  # 3: C
+        ( t1, -t1,  t1),  # 4: D
+        ( t1,  t1, -t1),  # 5: E
+        (-t1,  t1, -t1),  # 6: F
+        (-t1, -t1, -t1),  # 7: G
+        ( t1, -t1, -t1),  # 8: H
+    ]
+
+    # 面：Vector{NTuple{4,Int}}
+    # 每个面 4 个顶点索引，按右手定则排序，法线指向外侧
+    faces = [
+        (1, 2, 3, 4),  # z = +1  (A B C D)
+        (5, 8, 7, 6),  # z = -1  (E H G F)
+        (8, 5, 1, 4),  # x = +1  (H E A D)
+        (7, 3, 2, 6),  # x = -1  (G C B F)
+        (6, 2, 1, 5),  # y = +1  (F B A E)
+        (7, 8, 4, 3),  # y = -1  (G H D C)
+    ]
+
+    # 法线：直接给出（也是 Vector{NTuple{3,Float64}}）
+    normals = [
+        ( t0,  t0,  t1),  # 对应面 (1,2,3,4)
+        ( t0,  t0, -t1),  # 对应面 (5,8,7,6)
+        ( t1,  t0,  t0),  # 对应面 (8,5,1,4)
+        (-t1,  t0,  t0),  # 对应面 (7,3,2,6)
+        ( t0,  t1,  t0),  # 对应面 (6,2,1,5)
+        ( t0, -t1,  t0),  # 对应面 (7,8,4,3)
+    ]
+
+    panels = Vector{Panel{T, 3}}()
+    for i in 1:6
+        face = faces[i]
+        normal = normals[i]
+        new_panels = square_surface_adaptive_panels(vertices[face[1]], vertices[face[2]], vertices[face[3]], vertices[face[4]], ns, ws, normal, is_edge, is_corner, n_adapt_edge, n_adapt_corner)
+        append!(panels, new_panels)
+    end
+
+    return Interface(length(panels), panels)
+end

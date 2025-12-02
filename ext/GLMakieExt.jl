@@ -2,10 +2,10 @@ module GLMakieExt
 
 using GLMakie
 using BoundaryIntegral
-using BoundaryIntegral: Interface, DielectricInterfaces
+using BoundaryIntegral: Interface, DielectricInterfaces, Panel
 
 import BoundaryIntegral: viz_2d_interfaces, viz_2d_dielectric_interfaces
-import BoundaryIntegral: viz_3d_squares
+import BoundaryIntegral: viz_3d_squares, viz_3d_interface
 
 function viz_2d_interface!(ax::Axis, interface::Interface{T, 2}) where T
     t = 0.05
@@ -66,12 +66,31 @@ end
 function viz_3d_squares(squares::Vector{NTuple{4, NTuple{3, T}}}) where T
     fig = Figure()
     ax = Axis3(fig[1, 1])
+    viz_3d_squares!(ax, squares)
+    return fig
+end
 
+function viz_3d_squares!(ax::Axis3, squares::Vector{NTuple{4, NTuple{3, T}}}) where T
     for square in squares
         lines!(ax, [square[1][1], square[2][1], square[3][1], square[4][1], square[1][1]], [square[1][2], square[2][2], square[3][2], square[4][2], square[1][2]], [square[1][3], square[2][3], square[3][3], square[4][3], square[1][3]], color = :blue)
     end
+end
 
+function viz_3d_interface(interface::Interface{T, 3}) where T
+    fig = Figure()
+    ax = Axis3(fig[1, 1])
+    viz_3d_panels!(ax, interface.panels)
     return fig
+end
+
+function viz_3d_panels!(ax::Axis3, panels::Vector{Panel{T, 3}}; show_normal::Bool = false) where T
+    for panel in panels
+        scatter!(ax, [p[1] for p in panel.points], [p[2] for p in panel.points], [p[3] for p in panel.points], color = :blue, markersize = 1.5)
+        if show_normal
+            nx, ny, nz = 0.2 .* panel.normal
+            lines!(ax, [panel.points[1][1], panel.points[1][1] + nx], [panel.points[1][2], panel.points[1][2] + ny], [panel.points[1][3], panel.points[1][3] + nz], color = :black, linewidth = 0.4)
+        end
+    end
 end
 
 end
