@@ -65,6 +65,11 @@ end
 # after one step of adaptation, there are at most two edges with singularity
 function _square_surface!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple{4, NTuple{3, T}}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, edge_depth::Int, corner_depth::Int) where T
 
+    if (!any(is_edge) && !any(is_corner)) || (edge_depth == 0 && corner_depth == 0)
+        push!(squares, abcd)
+        return squares
+    end
+
     a, b, c, d = abcd
     h_ab = (a .+ b) ./ 2
     h_bc = (b .+ c) ./ 2
@@ -84,30 +89,29 @@ function _square_surface!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple
             push!(squares, abcd)
         else
             for i in 1:4
-                !is_corner[i] && push!(squares, sub_squares[i])
-                dummy_is_edge = (false, false, false, false) # no further edge refinement needed
-                new_is_corner_mut = [false, false, false, false]
-                new_is_corner_mut[i] = true
-                _square_surface!(squares, sub_squares[i], dummy_is_edge, Tuple(new_is_corner_mut), 0, corner_depth - 1)
+                if !is_corner[i] 
+                    push!(squares, sub_squares[i])
+                else
+                    dummy_is_edge = (false, false, false, false) # no further edge refinement needed
+                    new_is_corner_mut = [false, false, false, false]
+                    new_is_corner_mut[i] = true
+                    _square_surface!(squares, sub_squares[i], dummy_is_edge, Tuple(new_is_corner_mut), 0, corner_depth - 1)
+                end
             end
         end
     else
         for i in 1:4
-            j = isodd(i) ? mod1(i - 1, 4) : mod1(i + 1, 4) # determine the adjacent edge of the current edge
-            if is_edge[i] && is_edge[j] # corner type
-                new_is_edge_mut = [false, false, false, false]
-                new_is_edge_mut[i] = true
-                new_is_edge_mut[j] = true
-                new_is_corner_mut = [false, false, false, false]
-                new_is_corner_mut[i] = true
-                _square_surface!(squares, sub_squares[i], Tuple(new_is_edge_mut), Tuple(new_is_corner_mut), edge_depth - 1, corner_depth - 1)
-            elseif is_edge[i] || is_edge[j] # edge type
-                new_is_edge_mut = [false, false, false, false]
-                new_is_edge_mut[is_edge[i] ? i : j] = true
-                _square_surface!(squares, sub_squares[i], Tuple(new_is_edge_mut), (false, false, false, false), edge_depth - 1, corner_depth - 1)
-            else # no edge
-                push!(squares, sub_squares[i])
-            end
+            new_is_corner_mut = [false, false, false, false]
+            new_is_corner_mut[i] = is_corner[i]
+            new_is_corner = Tuple(new_is_corner_mut)
+
+            j = mod1(i - 1, 4)
+            new_is_edge_mut = [false, false, false, false]
+            new_is_edge_mut[i] = is_edge[i]
+            new_is_edge_mut[j] = is_edge[j]
+            new_is_edge = Tuple(new_is_edge_mut)
+
+            _square_surface!(squares, sub_squares[i], new_is_edge, new_is_corner, edge_depth - 1, corner_depth - 1)
         end
     end
 

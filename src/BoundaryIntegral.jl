@@ -23,6 +23,7 @@ export solve_lu, solve_gmres
 
 # visualization
 export viz_2d_interfaces, viz_2d_dielectric_interfaces
+export viz_3d_squares
 
 include("types.jl")
 
@@ -44,5 +45,6 @@ include("solver/dielectric_box.jl")
 
 # visualization
 include("visualization/viz_2d.jl")
+include("visualization/viz_3d.jl")
 
 end

@@ -2,8 +2,10 @@ module GLMakieExt
 
 using GLMakie
 using BoundaryIntegral
+using BoundaryIntegral: Interface, DielectricInterfaces
 
-import BoundaryIntegral: viz_2d_interface!, viz_2d_interfaces, viz_2d_interfaces, viz_2d_dielectric_interfaces
+import BoundaryIntegral: viz_2d_interfaces, viz_2d_dielectric_interfaces
+import BoundaryIntegral: viz_3d_squares
 
 function viz_2d_interface!(ax::Axis, interface::Interface{T, 2}) where T
     t = 0.05
@@ -56,6 +58,17 @@ function viz_2d_dielectric_interfaces(dbox::DielectricInterfaces{T, 2}) where T
 
     for (interface, eps_in, eps_out) in dbox.interfaces
         viz_2d_interface!(ax, interface)
+    end
+
+    return fig
+end
+
+function viz_3d_squares(squares::Vector{NTuple{4, NTuple{3, T}}}) where T
+    fig = Figure()
+    ax = Axis3(fig[1, 1])
+
+    for square in squares
+        lines!(ax, [square[1][1], square[2][1], square[3][1], square[4][1], square[1][1]], [square[1][2], square[2][2], square[3][2], square[4][2], square[1][2]], [square[1][3], square[2][3], square[3][3], square[4][3], square[1][3]], color = :blue)
     end
 
     return fig
