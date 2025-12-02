@@ -31,8 +31,8 @@ include("kernel/coulomb.jl")
 include("kernel/kernelabstractions.jl")
 
 # geometries
-include("geometry/single_box.jl")
-include("geometry/multi_box.jl")
+include("geometry/box2d.jl")
+include("geometry/box3d.jl")
 
 # utilities
 include("utils/greens_identity.jl")
