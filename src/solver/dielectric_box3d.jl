@@ -5,13 +5,53 @@ end
 
 function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
 
+    ns, ws = gausslegendre(n_quad)
+
     interfaces = Vector{Tuple{Interface{T, 3}, T, T}}()
 
-    # box1 at left, (0, -1, 0) -> (1, 0, 1)
+    # box1 at left, (0, -1, 0) -> (1, 0, 1), box2 at right, (0, 0, 0) -> (1, 1, 1)
+    square_1 = [
+        ((1.0, -1.0, 1.0), (0.0, -1.0, 1.0), (0.0, 0.0, 1.0), (1.0, 0.0, 1.0)), 
+        ((1.0, -1.0, 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, -1.0, 0.0)), 
+        ((1.0, 0.0, 0.0), (1.0, -1.0, 0.0), (1.0, -1.0, 1.0), (1.0, 0.0, 1.0)), 
+        ((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 1.0), (0.0, -1.0, 0.0)), 
+        ((0.0, -1.0, 0.0), (0.0, -1.0, 1.0), (1.0, -1.0, 1.0), (1.0, -1.0, 0.0)), 
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 1.0), (0.0, 0.0, 1.0))]
+    square_2 = [
+        ((1.0, 0.0, 1.0), (0.0, 0.0, 1.0), (0.0, 1.0, 1.0), (1.0, 1.0, 1.0)), 
+        ((1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0)), 
+        ((1.0, 1.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0)), 
+        ((0.0, 1.0, 0.0), (0.0, 1.0, 1.0), (0.0, 0.0, 1.0), (0.0, 0.0, 0.0)), 
+        ((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 0.0, 0.0)), 
+        ((0.0, 1.0, 0.0), (1.0, 1.0, 0.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0))]
     
+    normals = [(0.0, 0.0, 1.0), (0.0, 0.0, -1.0), (1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (0.0, - 1.0, 0.0), (0.0, 1.0, 0.0)]
 
-    # box2 at right, (0, 0, 0) -> (1, 1, 1)
+    surf_1 = [(square_1[i], normals[i]) for i in (1:5)]
+    surf_2 = [(square_2[i], normals[i]) for i in [1, 2, 3, 4, 6]]
+    surf_3 = (square_1[6], normals[5])
 
+    panels_1 = Vector{Panel{T, 3}}()
+    for surf in surf_1
+        vertices, normal = surf
+        new_panels = square_surface_adaptive_panels(vertices..., ns, ws, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+        append!(panels_1, new_panels)
+    end
+    interface_1 = Interface(length(panels_1), panels_1)
+
+    panels_2 = Vector{Panel{T, 3}}()
+    for surf in surf_2
+        vertices, normal = surf
+        new_panels = square_surface_adaptive_panels(vertices..., ns, ws, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+        append!(panels_2, new_panels)
+    end
+    interface_2 = Interface(length(panels_2), panels_2)
+
+    panels_3 = square_surface_adaptive_panels(surf_3[1][1], surf_3[1][2], surf_3[1][3], surf_3[1][4], ns, ws, surf_3[2], (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+    interface_3 = Interface(length(panels_3), panels_3)
+
+    interfaces = [(interface_1, eps_box1, eps_out), (interface_2, eps_box2, eps_out), (interface_3, eps_box2, eps_box1)]
+    return DielectricInterfaces(length(interfaces), interfaces)
 end
 
 function Lhs_dielectric_mbox3d_direct(dbox::DielectricInterfaces{T, 3}) where T
