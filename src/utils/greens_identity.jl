@@ -61,16 +61,19 @@ function l2d_singlelayer_gi(dbox::DielectricInterfaces{T, 2}, sigma::Vector{T}, 
     return s
 end
 
-function l3d_singlelayer_gi(dbox::DielectricInterfaces{T, 3}, sigma::Vector{T}, radius::T, order::Int) where T
+function _get_lebedev_order(order::Int)
     order_new = order
     while true
         if isavailable(order_new)
             order_new != order && @warn "lebedev order $order_new is the nearest available order"
             break
-        else
-            order_new += 1
         end
     end
+    return order_new
+end
+
+function l3d_singlelayer_gi(dbox::DielectricInterfaces{T, 3}, sigma::Vector{T}, radius::T, order::Int) where T
+    order_new = _get_lebedev_order(order)
 
     x, y, z, w = lebedev_by_order(order_new)
     x .*= radius
@@ -89,34 +92,31 @@ function l3d_singlelayer_gi(dbox::DielectricInterfaces{T, 3}, sigma::Vector{T}, 
     return t
 end
 
-function l3d_singlelayer_charge(src::NTuple{3, T}, radius::T, order::Int) where T
+function l3d_singlelayer_charge(src::Vector{NTuple{3, T}}, q::Vector{T}, radius::T, order::Int) where T
 
-    while true
-        if isavailable(order)
-            @warn "lebedev order $order is the nearest available order"
-            break
-        else
-            order += 1
-        end
-    end
+    order_new = _get_lebedev_order(order)
 
-    x, y, z, w = lebedev_by_order(order)
+    x, y, z, w = lebedev_by_order(order_new)
     x .*= radius
     y .*= radius
     z .*= radius
     w .*= 4π * radius^2
 
     t = zero(T)
-    for (xi, yi, zi, wi) in zip(x, y, z, w)
-        t += laplace3d_doublelayer(src, (xi, yi, zi), (xi, yi, zi) ./ radius) * wi
+    for (r, q) in zip(src, q)
+        for (xi, yi, zi, wi) in zip(x, y, z, w)
+            t += q * laplace3d_doublelayer(r, (xi, yi, zi), (xi, yi, zi) ./ radius) * wi
+        end
     end
     return t
 end
 
-function l3d_box_gi(dbox::DielectricInterfaces{T, 3}, src::NTuple{3, T}) where T
+function l3d_box_gi(src::Vector{NTuple{3, T}}, q::Vector{T}, dbox::DielectricInterfaces{T, 3}) where T
     t = zero(T)
-    for point in eachpoint(dbox)
-        t += laplace3d_doublelayer(src, point.point, point.normal) * point.weight
+    for (r, q) in zip(src, q)
+        for point in eachpoint(dbox)
+            t += q * laplace3d_doublelayer(r, point.point, point.normal) * point.weight
+        end
     end
     return t
 end

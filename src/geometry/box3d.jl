@@ -12,14 +12,13 @@ function square_surface_uniform_panel(a::NTuple{3, T}, b::NTuple{3, T}, c::NTupl
     @assert (abs(dot(normal, b .- a)) < 1e-10) && (abs(dot(normal, c .- b)) < 1e-10) && (abs(dot(normal, d .- c)) < 1e-10) && (abs(dot(normal, a .- d)) < 1e-10) "Normal is not perpendicular to the edges"
     @assert (abs(dot(b .- a, c .- b)) < 1e-10) && (abs(dot(c .- b, d .- c)) < 1e-10) && (abs(dot(d .- c, a .- d)) < 1e-10) && (abs(dot(a .- d, b .- a)) < 1e-10) "Edges are not perpendicular"
 
-
-    e_ab = (b .- a) ./ Lab
-    e_bc = (c .- b) ./ Lbc
+    cc = (a .+ b .+ c .+ d) ./ 4
 
     points = Vector{NTuple{3, T}}()
     for i in 1:length(ns)
         for j in 1:length(ns)
-            p = a .+ e_ab .* (ns[i] .+ 1) ./ 2 .* Lab .+ e_bc .* (ns[j] .+ 1) ./ 2 .* Lbc
+            # p = a .+ e_ab .* (ns[i] .+ 1) ./ 2 .* Lab .+ e_bc .* (ns[j] .+ 1) ./ 2 .* Lbc
+            p = cc .+ (b .- a) .* (ns[i] / 2) .+ (d .- a) .* (ns[j] / 2)
             push!(points, p)
         end
     end    
@@ -127,8 +126,6 @@ function single_box3d(n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Typ
         ( t1, -t1, -t1),  # 8: H
     ]
 
-    # 面：Vector{NTuple{4,Int}}
-    # 每个面 4 个顶点索引，按右手定则排序，法线指向外侧
     faces = [
         (1, 2, 3, 4),  # z = +1  (A B C D)
         (5, 8, 7, 6),  # z = -1  (E H G F)
@@ -138,14 +135,13 @@ function single_box3d(n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Typ
         (7, 8, 4, 3),  # y = -1  (G H D C)
     ]
 
-    # 法线：直接给出（也是 Vector{NTuple{3,Float64}}）
     normals = [
-        ( t0,  t0,  t1),  # 对应面 (1,2,3,4)
-        ( t0,  t0, -t1),  # 对应面 (5,8,7,6)
-        ( t1,  t0,  t0),  # 对应面 (8,5,1,4)
-        (-t1,  t0,  t0),  # 对应面 (7,3,2,6)
-        ( t0,  t1,  t0),  # 对应面 (6,2,1,5)
-        ( t0, -t1,  t0),  # 对应面 (7,8,4,3)
+        ( t0,  t0,  t1),  # (1,2,3,4)
+        ( t0,  t0, -t1),  # (5,8,7,6)
+        ( t1,  t0,  t0),  # (8,5,1,4)
+        (-t1,  t0,  t0),  # (7,3,2,6)
+        ( t0,  t1,  t0),  # (6,2,1,5)
+        ( t0, -t1,  t0),  # (7,8,4,3)
     ]
 
     panels = Vector{Panel{T, 3}}()
@@ -157,4 +153,54 @@ function single_box3d(n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Typ
     end
 
     return Interface(length(panels), panels)
+end
+
+# generate a cubic box with left front bottom corner at lfd and right upper back corner at rbu
+function cubic_box3d(lfd::NTuple{3, T}, rbu::NTuple{3, T}) where T
+    xL, yF, zD = lfd  # left, front, down
+    xR, yB, zU = rbu  # right, back, up
+
+    @assert xR > xL && yB > yF && zU > zD "rbu must be the opposite corner of lfd (xR>xL, yB>yF, zU>zD)"
+
+    # 1: (right, front, up)
+    # 2: (left,  front, up)
+    # 3: (left,  back,  up)
+    # 4: (right, back,  up)
+    # 5: (right, front, down)
+    # 6: (left,  front, down)
+    # 7: (left,  back,  down)
+    # 8: (right, back,  down)
+    vertices = NTuple{3,T}[
+        (xR, yF, zU),  # 1
+        (xL, yF, zU),  # 2
+        (xL, yB, zU),  # 3
+        (xR, yB, zU),  # 4
+        (xR, yF, zD),  # 5
+        (xL, yF, zD),  # 6
+        (xL, yB, zD),  # 7
+        (xR, yB, zD),  # 8
+    ]
+
+    faces = NTuple{4,Int}[
+        (1, 2, 3, 4),  # z = zU  (top),    n = (0, 0, +1)
+        (5, 8, 7, 6),  # z = zD  (bottom), n = (0, 0, -1)
+        (8, 5, 1, 4),  # x = xR  (right),  n = (+1, 0, 0)
+        (7, 3, 2, 6),  # x = xL  (left),   n = (-1, 0, 0)
+        (6, 2, 1, 5),  # y = yF  (front),  n = (0, +1, 0)
+        (7, 8, 4, 3),  # y = yB  (back),   n = (0, -1, 0)
+    ]
+
+    z0 = zero(T)
+    o  = one(T)
+
+    normals = NTuple{3,T}[
+        ( z0,  z0,  o ),  # top    (+z)
+        ( z0,  z0, -o ),  # bottom (-z)
+        (  o,  z0,  z0),  # right  (+x)
+        ( -o,  z0,  z0),  # left   (-x)
+        ( z0,  o,  z0),   # front  (+y)
+        ( z0, -o,  z0),   # back   (-y)
+    ]
+
+    return vertices, faces, normals
 end
