@@ -60,3 +60,63 @@ function l2d_singlelayer_gi(dbox::DielectricInterfaces{T, 2}, sigma::Vector{T}, 
     end
     return s
 end
+
+function l3d_singlelayer_gi(dbox::DielectricInterfaces{T, 3}, sigma::Vector{T}, radius::T, order::Int) where T
+    order_new = order
+    while true
+        if isavailable(order_new)
+            order_new != order && @warn "lebedev order $order_new is the nearest available order"
+            break
+        else
+            order_new += 1
+        end
+    end
+
+    x, y, z, w = lebedev_by_order(order_new)
+    x .*= radius
+    y .*= radius
+    z .*= radius
+    w .*= 4π * radius^2
+
+    t = zero(T)
+    for (xi, yi, zi, wi) in zip(x, y, z, w)
+        s = zero(T)
+        for point in eachpoint(dbox)
+            s += laplace3d_doublelayer(point.point, (xi, yi, zi), (xi, yi, zi) ./ radius) * point.weight * sigma[point.global_idx]
+        end
+        t += s * wi
+    end
+    return t
+end
+
+function l3d_singlelayer_charge(src::NTuple{3, T}, radius::T, order::Int) where T
+
+    while true
+        if isavailable(order)
+            @warn "lebedev order $order is the nearest available order"
+            break
+        else
+            order += 1
+        end
+    end
+
+    x, y, z, w = lebedev_by_order(order)
+    x .*= radius
+    y .*= radius
+    z .*= radius
+    w .*= 4π * radius^2
+
+    t = zero(T)
+    for (xi, yi, zi, wi) in zip(x, y, z, w)
+        t += laplace3d_doublelayer(src, (xi, yi, zi), (xi, yi, zi) ./ radius) * wi
+    end
+    return t
+end
+
+function l3d_box_gi(dbox::DielectricInterfaces{T, 3}, src::NTuple{3, T}) where T
+    t = zero(T)
+    for point in eachpoint(dbox)
+        t += laplace3d_doublelayer(src, point.point, point.normal) * point.weight
+    end
+    return t
+end

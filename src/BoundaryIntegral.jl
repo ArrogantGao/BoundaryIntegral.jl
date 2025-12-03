@@ -1,7 +1,7 @@
 module BoundaryIntegral
 
 using LinearAlgebra, OMEinsum
-using FastGaussQuadrature
+using FastGaussQuadrature, Lebedev
 using Krylov, LinearMaps, Roots
 
 using FMM2D, FMM3D
