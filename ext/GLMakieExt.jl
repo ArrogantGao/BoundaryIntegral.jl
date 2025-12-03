@@ -76,10 +76,10 @@ function viz_3d_squares!(ax::Axis3, squares::Vector{NTuple{4, NTuple{3, T}}}) wh
     end
 end
 
-function viz_3d_interface(interface::Interface{T, 3}) where T
+function viz_3d_interface(interface::Interface{T, 3}; show_normal::Bool = false) where T
     fig = Figure()
     ax = Axis3(fig[1, 1])
-    viz_3d_panels!(ax, interface.panels)
+    viz_3d_panels!(ax, interface.panels, show_normal = show_normal)
     return fig
 end
 
