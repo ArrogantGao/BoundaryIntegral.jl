@@ -23,7 +23,7 @@ export solve_lu, solve_gmres
 
 # visualization
 export viz_2d_interfaces, viz_2d_dielectric_interfaces
-export viz_3d_squares, viz_3d_interface
+export viz_3d_squares, viz_3d_interface, viz_3d_dielectric_interfaces
 
 include("types.jl")
 

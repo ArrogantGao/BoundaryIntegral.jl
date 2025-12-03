@@ -51,6 +51,7 @@ function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad::I
     interface_3 = Interface(length(panels_3), panels_3)
 
     interfaces = [(interface_1, eps_box1, eps_out), (interface_2, eps_box2, eps_out), (interface_3, eps_box2, eps_box1)]
+    
     return DielectricInterfaces(length(interfaces), interfaces)
 end
 

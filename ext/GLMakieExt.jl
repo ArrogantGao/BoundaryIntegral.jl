@@ -5,7 +5,7 @@ using BoundaryIntegral
 using BoundaryIntegral: Interface, DielectricInterfaces, Panel
 
 import BoundaryIntegral: viz_2d_interfaces, viz_2d_dielectric_interfaces
-import BoundaryIntegral: viz_3d_squares, viz_3d_interface
+import BoundaryIntegral: viz_3d_squares, viz_3d_interface, viz_3d_dielectric_interfaces
 
 function viz_2d_interface!(ax::Axis, interface::Interface{T, 2}) where T
     t = 0.05
@@ -91,6 +91,15 @@ function viz_3d_panels!(ax::Axis3, panels::Vector{Panel{T, 3}}; show_normal::Boo
             lines!(ax, [panel.points[1][1], panel.points[1][1] + nx], [panel.points[1][2], panel.points[1][2] + ny], [panel.points[1][3], panel.points[1][3] + nz], color = :black, linewidth = 0.4)
         end
     end
+end
+
+function viz_3d_dielectric_interfaces(dbox::DielectricInterfaces{T, 3}; show_normal::Bool = false) where T
+    fig = Figure()
+    ax = Axis3(fig[1, 1])
+    for (interface, eps_in, eps_out) in dbox.interfaces
+        viz_3d_panels!(ax, interface.panels, show_normal = show_normal)
+    end
+    return fig
 end
 
 end
