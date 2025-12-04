@@ -149,13 +149,15 @@ function single_box3d(n_boxes::Int, n_quad::Int, n_adapt_edge::Int, n_adapt_corn
         a, b, c, d = [vertices[j] for j in face]
         r_ab = b .- a
         r_ad = d .- a
+        d_ab = r_ab ./ n_boxes
+        d_ad = r_ad ./ n_boxes
         normal = normals[i]
         for face_idx in 1:n_boxes
             for face_idy in 1:n_boxes
-                af = a .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
-                bf = b .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
-                cf = c .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
-                df = d .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
+                af = a .+ d_ab .* (face_idx - 1) .+ d_ad .* (face_idy - 1)
+                bf = af .+ d_ab
+                cf = af .+ d_ab .+ d_ad
+                df = af .+ d_ad
 
                 is_edge_mut = [false, false, false, false]
                 is_corner_mut = [false, false, false, false]

@@ -85,10 +85,23 @@ end
 
 function viz_3d_panels!(ax::Axis3, panels::Vector{Panel{T, 3}}; show_normal::Bool = false) where T
     for panel in panels
-        scatter!(ax, [p[1] for p in panel.points], [p[2] for p in panel.points], [p[3] for p in panel.points], color = :blue, markersize = 1.5)
+        xs = [p[1] for p in panel.points]
+        ys = [p[2] for p in panel.points]
+        zs = [p[3] for p in panel.points]
+        scatter!(ax, xs, ys, zs, color = :blue, markersize = 1.5)
+        x_max = maximum(xs)
+        x_min = minimum(xs)
+        y_max = maximum(ys)
+        y_min = minimum(ys)
+        z_max = maximum(zs)
+        z_min = minimum(zs)
+        # draw a box 
+        # for x in [x_min, x_max], y in [y_min, y_max], z in [z_min, z_max]
+        #     scatter!(ax, [x], [y], [z], color = :red, markersize = 1.5)
+        # end
         if show_normal
             nx, ny, nz = 0.2 .* panel.normal
-            lines!(ax, [panel.points[1][1], panel.points[1][1] + nx], [panel.points[1][2], panel.points[1][2] + ny], [panel.points[1][3], panel.points[1][3] + nz], color = :black, linewidth = 0.4)
+            lines!(ax, xs .+ nx, ys .+ ny, zs .+ nz, color = :black, linewidth = 0.4)
         end
     end
 end
