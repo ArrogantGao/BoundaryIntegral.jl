@@ -50,6 +50,26 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
     return panels
 end
 
+function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, n_quad0::Int, normal::NTuple{3, T}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, n_adapt_edge::Int, n_adapt_corner::Int) where T
+
+    @assert n_adapt_edge <= n_adapt_corner "n_adapt_edge must be less than or equal to n_adapt_corner"
+
+    squares = Vector{NTuple{4, NTuple{3, T}}}()
+
+    # first handle the edges
+    _square_surfaces!(squares, (a, b, c, d), is_edge, is_corner, n_adapt_edge, n_adapt_corner)
+
+    L_ab = norm(b .- a)
+    panels = Vector{Panel{T, 3}}()
+    for square in squares
+        n_quad = max(4, ceil(Int, n_quad0 * norm(square[2] .- square[1]) / L_ab))
+        ns, ws = gausslegendre(n_quad)
+        push!(panels, square_surface_uniform_panel(square..., ns, ws, normal))
+    end
+
+    return panels
+end
+
 # after one step of adaptation, there are at most two edges with singularity
 function _square_surfaces!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTuple{4, NTuple{3, T}}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, edge_depth::Int, corner_depth::Int) where T
 
@@ -172,7 +192,8 @@ function single_box3d(n_boxes::Int, n_quad::Int, n_adapt_edge::Int, n_adapt_corn
                 is_corner_mut[3] = is_edge_mut[2] && is_edge_mut[3]
                 is_corner_mut[4] = is_edge_mut[3] && is_edge_mut[4]
 
-                new_panels = square_surface_adaptive_panels(af, bf, cf, df, ns, ws, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
+                # new_panels = square_surface_adaptive_panels(af, bf, cf, df, ns, ws, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
+                new_panels = square_surface_adaptive_panels(af, bf, cf, df, n_quad, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
                 append!(panels, new_panels)
             end
         end
