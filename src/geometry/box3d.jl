@@ -107,13 +107,12 @@ function _square_surfaces!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTupl
 end
 
 # first try to mesh a single box
-function single_box3d(n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+# each surfaces are first divided into n_boxexs * n_boxes sub_surfaces
+function single_box3d(n_boxes::Int, n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
     ns, ws = gausslegendre(n_quad)
 
     t1 = one(T)
     t0 = zero(T)
-    is_edge = (true, true, true, true)
-    is_corner = (true, true, true, true)
 
     vertices = [
         ( t1,  t1,  t1),  # 1: A
@@ -147,9 +146,34 @@ function single_box3d(n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Typ
     panels = Vector{Panel{T, 3}}()
     for i in 1:6
         face = faces[i]
+        a, b, c, d = [vertices[j] for j in face]
+        r_ab = b .- a
+        r_ad = d .- a
         normal = normals[i]
-        new_panels = square_surface_adaptive_panels(vertices[face[1]], vertices[face[2]], vertices[face[3]], vertices[face[4]], ns, ws, normal, is_edge, is_corner, n_adapt_edge, n_adapt_corner)
-        append!(panels, new_panels)
+        for face_idx in 1:n_boxes
+            for face_idy in 1:n_boxes
+                af = a .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
+                bf = b .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
+                cf = c .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
+                df = d .+ r_ab .* (face_idx - 1) ./ n_boxes .+ r_ad .* (face_idy - 1) ./ n_boxes
+
+                is_edge_mut = [false, false, false, false]
+                is_corner_mut = [false, false, false, false]
+
+                is_edge_mut[4] = (face_idx == 1)
+                is_edge_mut[2] = (face_idx == n_boxes)
+                is_edge_mut[1] = (face_idy == 1)
+                is_edge_mut[3] = (face_idy == n_boxes)
+
+                is_corner_mut[1] = is_edge_mut[1] && is_edge_mut[4]
+                is_corner_mut[2] = is_edge_mut[1] && is_edge_mut[2]
+                is_corner_mut[3] = is_edge_mut[2] && is_edge_mut[3]
+                is_corner_mut[4] = is_edge_mut[3] && is_edge_mut[4]
+
+                new_panels = square_surface_adaptive_panels(af, bf, cf, df, ns, ws, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
+                append!(panels, new_panels)
+            end
+        end
     end
 
     return Interface(length(panels), panels)

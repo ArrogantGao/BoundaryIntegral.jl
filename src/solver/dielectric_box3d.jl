@@ -1,5 +1,5 @@
-function dielectric_box3d(eps_box::T, eps_out::T, n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
-    box = single_box3d(n_quad, n_adapt_edge, n_adapt_corner, T)
+function dielectric_box3d(eps_box::T, eps_out::T, n_boxes::Int, n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+    box = single_box3d(n_boxes, n_quad, n_adapt_edge, n_adapt_corner, T)
     return DielectricInterfaces(1, [(box, eps_box, eps_out)])
 end
 
@@ -51,7 +51,7 @@ function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad::I
     interface_3 = Interface(length(panels_3), panels_3)
 
     interfaces = [(interface_1, eps_box1, eps_out), (interface_2, eps_box2, eps_out), (interface_3, eps_box2, eps_box1)]
-    
+
     return DielectricInterfaces(length(interfaces), interfaces)
 end
 
@@ -73,7 +73,7 @@ function Lhs_dielectric_mbox3d_fmm3d(dbox::DielectricInterfaces{T, 3}, tol::Floa
     D_transpose = laplace3d_DT_fmm3d(dbox, tol)
 
     function g(x)
-        Dx = - D_transpose * x
+        Dx = D_transpose * x
 
         offset = 0
         for (interface, eps_in, eps_out) in dbox.interfaces
