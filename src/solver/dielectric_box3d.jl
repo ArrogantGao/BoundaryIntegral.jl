@@ -1,5 +1,5 @@
-function dielectric_box3d(eps_box::T, eps_out::T, n_boxes::Int, n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
-    box = single_box3d(n_boxes, n_quad, n_adapt_edge, n_adapt_corner, T)
+function dielectric_box3d(eps_box::T, eps_out::T, n_boxes::Int, n_quad::Int, reduce_quad::Bool, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+    box = single_box3d(n_boxes, n_quad, reduce_quad, n_adapt_edge, n_adapt_corner, T)
     return DielectricInterfaces(1, [(box, eps_box, eps_out)])
 end
 

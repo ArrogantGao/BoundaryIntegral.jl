@@ -120,3 +120,24 @@ function l3d_box_gi(src::Vector{NTuple{3, T}}, q::Vector{T}, dbox::DielectricInt
     end
     return t
 end
+
+function sphere_points(radius::T, nθ::Int, nφ::Int) where T
+    θ = range(-π/2, π/2; length = nθ) 
+    φ = range(-π,   π;   length = nφ)
+
+    Θ = [t for t in θ, p in φ]
+    Φ = [p for t in θ, p in φ]
+
+    R = radius
+    X = R .* cos.(Θ) .* cos.(Φ)
+    Y = R .* cos.(Θ) .* sin.(Φ)
+    Z = R .* sin.(Θ)
+
+    trgs = zeros(3, length(X))
+    for i in 1:length(X)
+        trgs[1, i] = X[i]
+        trgs[2, i] = Y[i]
+        trgs[3, i] = Z[i]
+    end
+    return trgs
+end

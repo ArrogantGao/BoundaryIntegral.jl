@@ -94,7 +94,7 @@ function _laplace3d_D_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Fl
     eps = thresh
     vals = lfmm3d(eps, sources, dipvecs = dipvecs, pg = 1)
 
-    return - vals.pot ./ 4π
+    return vals.pot ./ 4π
 end
 
 function laplace3d_D_fmm3d(dielectric_interfaces::DielectricInterfaces{Float64, 3}, thresh::Float64)
@@ -114,4 +114,29 @@ function laplace3d_D_fmm3d(dielectric_interfaces::DielectricInterfaces{Float64, 
 
     f = charges -> _laplace3d_D_fmm3d(charges, sources, weights, norms, thresh)
     return LinearMap{Float64}(f, n_points, n_points)
+end
+
+function _laplace3d_pottarg_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, weights::Vector{Float64}, targets::Matrix{Float64}, thresh::Float64)
+    n = length(charges)
+    m = size(targets, 2)
+    @assert size(sources) == (3, n)
+    @assert size(targets) == (3, m)
+    @assert size(weights) == (n,)
+    vals = lfmm3d(thresh, sources, charges = weights .* charges, targets = targets, pgt = 1)
+    return vals.pottarg ./ 4π
+end
+
+function laplace3d_pottarg_fmm3d(dielectric_interfaces::DielectricInterfaces{Float64, 3}, targets::Matrix{Float64}, thresh::Float64)
+    n_points = num_points(dielectric_interfaces)
+    sources = zeros(Float64, 3, n_points)
+    weights = zeros(Float64, n_points)
+    for (i, point) in enumerate(eachpoint(dielectric_interfaces))
+        weights[i] = point.weight
+        sources[1, i] = point.point[1]
+        sources[2, i] = point.point[2]
+        sources[3, i] = point.point[3]
+    end
+
+    f = charges -> _laplace3d_pottarg_fmm3d(charges, sources, weights, targets, thresh)
+    return LinearMap{Float64}(f, size(targets, 2), n_points)
 end
