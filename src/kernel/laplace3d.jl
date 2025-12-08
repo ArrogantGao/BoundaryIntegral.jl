@@ -91,8 +91,7 @@ function _laplace3d_D_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Fl
         dipvecs[3, i] = norms[3, i] * (charges[i] * weights[i])
     end
 
-    eps = thresh
-    vals = lfmm3d(eps, sources, dipvecs = dipvecs, pg = 1)
+    vals = lfmm3d(thresh, sources, dipvecs = dipvecs, pg = 1)
 
     return vals.pot ./ 4π
 end
@@ -114,6 +113,44 @@ function laplace3d_D_fmm3d(dielectric_interfaces::DielectricInterfaces{Float64, 
 
     f = charges -> _laplace3d_D_fmm3d(charges, sources, weights, norms, thresh)
     return LinearMap{Float64}(f, n_points, n_points)
+end
+
+function _laplace3d_D_trg_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, targets::Matrix{Float64}, weights::Vector{Float64}, norms::Matrix{Float64}, thresh::Float64) 
+    n = length(weights)
+    m = size(targets, 2)
+    @assert length(charges) == n
+    @assert size(sources) == (3, n)
+    @assert size(norms) == (3, n)
+
+    dipvecs = zeros(Float64, 3, n)
+    for i in 1:n
+        dipvecs[1, i] = norms[1, i] * (charges[i] * weights[i])
+        dipvecs[2, i] = norms[2, i] * (charges[i] * weights[i])
+        dipvecs[3, i] = norms[3, i] * (charges[i] * weights[i])
+    end
+
+    vals = lfmm3d(thresh, sources, dipvecs = dipvecs, targets = targets, pgt = 1)
+
+    return vals.pottarg ./ 4π
+end
+
+function laplace3d_D_trg_fmm3d(dielectric_interfaces::DielectricInterfaces{Float64, 3}, targets::Matrix{Float64}, thresh::Float64)
+    n_points = num_points(dielectric_interfaces)
+    sources = zeros(Float64, 3, n_points)
+    weights = zeros(Float64, n_points)
+    norms = zeros(Float64, 3, n_points)
+    for (i, point) in enumerate(eachpoint(dielectric_interfaces))
+        weights[i] = point.weight
+        sources[1, i] = point.point[1]
+        sources[2, i] = point.point[2]
+        sources[3, i] = point.point[3]
+        norms[1, i] = point.normal[1]
+        norms[2, i] = point.normal[2]
+        norms[3, i] = point.normal[3]
+    end
+
+    f = charges -> _laplace3d_D_trg_fmm3d(charges, sources, targets, weights, norms, thresh)
+    return LinearMap{Float64}(f, size(targets, 2), n_points)
 end
 
 function _laplace3d_pottarg_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, weights::Vector{Float64}, targets::Matrix{Float64}, thresh::Float64)

@@ -1,4 +1,4 @@
-# mesh a triangle surface panel with tensor produce Gauss-Legendre quadrature points
+# mesh a rectangle surface panel with tensor product Gauss-Legendre quadrature points
 function square_surface_uniform_panel(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns::Vector{T}, ws::Vector{T}, normal::NTuple{3, T}) where T
 
     # check edge lengths
