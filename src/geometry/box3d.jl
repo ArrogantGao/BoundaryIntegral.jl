@@ -50,7 +50,7 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
     return panels
 end
 
-function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, n_quad0::Int, reduce_quad::Bool, normal::NTuple{3, T}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, n_adapt_edge::Int, n_adapt_corner::Int) where T
+function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, n_quad_max::Int, n_quad_min::Int, normal::NTuple{3, T}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, n_adapt_edge::Int, n_adapt_corner::Int) where T
 
     @assert n_adapt_edge <= n_adapt_corner "n_adapt_edge must be less than or equal to n_adapt_corner"
 
@@ -61,8 +61,17 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
 
     L_ab = norm(b .- a)
     panels = Vector{Panel{T, 3}}()
+
+    L_max = zero(T)
+    L_min = L_ab
     for square in squares
-        n_quad = reduce_quad ? max(1, ceil(Int, n_quad0 * norm(square[2] .- square[1]) / L_ab)) : n_quad0
+        L_max = max(L_max, norm(square[2] .- square[1]))
+        L_min = min(L_min, norm(square[2] .- square[1]))
+    end
+
+    for square in squares
+        L = norm(square[2] .- square[1])
+        n_quad = Ceil(Int, n_quad_min + (n_quad_max - n_quad_min) * (L - L_min) / (L_max - L_min))
         ns, ws = gausslegendre(n_quad)
         push!(panels, square_surface_uniform_panel(square..., ns, ws, normal))
     end

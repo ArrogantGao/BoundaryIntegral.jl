@@ -129,6 +129,39 @@ function laplace2d_DT_fmm2d(dielectric_interfaces::DielectricInterfaces{Float64,
     return LinearMap{Float64}(f, n_points, n_points)
 end
 
+function _laplace2d_D_fmm2d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, weights::Vector{Float64}, norms::Matrix{Float64}, thresh::Float64)
+    n = length(weights)
+    @assert size(sources) == (2, n)
+    @assert size(norms) == (2, n)
+    @assert size(weights) == (n,)
+
+    dipvecs = zeros(Float64, 2, n)
+    for i in 1:n
+        dipvecs[1, i] = norms[1, i] * (charges[i] * weights[i])
+        dipvecs[2, i] = norms[2, i] * (charges[i] * weights[i])
+    end
+
+    vals = rfmm2d(eps = thresh, sources = sources, dipvecs = dipvecs, pg = 1)
+    return - vals.pot ./ 2π
+end
+
+function laplace2d_D_fmm2d(dielectric_interfaces::DielectricInterfaces{Float64, 2}, thresh::Float64)
+    n_points = num_points(dielectric_interfaces)
+    sources = zeros(Float64, 2, n_points)
+    weights = zeros(Float64, n_points)
+    norms = zeros(Float64, 2, n_points)
+    for (i, point) in enumerate(eachpoint(dielectric_interfaces))
+        weights[i] = point.weight
+        sources[1, i] = point.point[1]
+        sources[2, i] = point.point[2]
+        norms[1, i] = point.normal[1]
+        norms[2, i] = point.normal[2]
+    end
+
+    f = charges -> _laplace2d_D_fmm2d(charges, sources, weights, norms, thresh)
+    return LinearMap{Float64}(f, n_points, n_points)
+end
+
 function _laplace2d_pottarg_fmm2d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, weights::Vector{Float64}, targets::Matrix{Float64}, thresh::Float64)
     n = length(charges)
     m = size(targets, 2)
