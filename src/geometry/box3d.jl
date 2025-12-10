@@ -71,7 +71,7 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
 
     for square in squares
         L = norm(square[2] .- square[1])
-        n_quad = Ceil(Int, n_quad_min + (n_quad_max - n_quad_min) * (L - L_min) / (L_max - L_min))
+        n_quad = ceil(Int, n_quad_min + (n_quad_max - n_quad_min) * (L - L_min) / (L_max - L_min))
         ns, ws = gausslegendre(n_quad)
         push!(panels, square_surface_uniform_panel(square..., ns, ws, normal))
     end
