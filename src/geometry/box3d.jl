@@ -136,7 +136,7 @@ end
 
 # first try to mesh a single box
 # each surfaces are first divided into n_boxexs * n_boxes sub_surfaces
-function single_box3d(n_boxes::Int, n_quad::Int, reduce_quad::Bool, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+function single_box3d(n_boxes::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
     t1 = one(T)
     t0 = zero(T)
 
@@ -199,7 +199,7 @@ function single_box3d(n_boxes::Int, n_quad::Int, reduce_quad::Bool, n_adapt_edge
                 is_corner_mut[4] = is_edge_mut[3] && is_edge_mut[4]
 
                 # new_panels = square_surface_adaptive_panels(af, bf, cf, df, ns, ws, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
-                new_panels = square_surface_adaptive_panels(af, bf, cf, df, n_quad, reduce_quad, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
+                new_panels = square_surface_adaptive_panels(af, bf, cf, df, n_quad_max, n_quad_min, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
                 append!(panels, new_panels)
             end
         end
