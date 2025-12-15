@@ -3,9 +3,7 @@ function dielectric_box3d(eps_box::T, eps_out::T, n_boxes::Int, n_quad_max::Int,
     return DielectricInterfaces(1, [(box, eps_box, eps_out)])
 end
 
-function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
-
-    ns, ws = gausslegendre(n_quad)
+function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
 
     interfaces = Vector{Tuple{Interface{T, 3}, T, T}}()
 
@@ -34,7 +32,7 @@ function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad::I
     panels_1 = Vector{Panel{T, 3}}()
     for surf in surf_1
         vertices, normal = surf
-        new_panels = square_surface_adaptive_panels(vertices..., ns, ws, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+        new_panels = square_surface_adaptive_panels(vertices..., n_quad_max, n_quad_min, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
         append!(panels_1, new_panels)
     end
     interface_1 = Interface(length(panels_1), panels_1)
@@ -42,12 +40,12 @@ function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad::I
     panels_2 = Vector{Panel{T, 3}}()
     for surf in surf_2
         vertices, normal = surf
-        new_panels = square_surface_adaptive_panels(vertices..., ns, ws, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+        new_panels = square_surface_adaptive_panels(vertices..., n_quad_max, n_quad_min, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
         append!(panels_2, new_panels)
     end
     interface_2 = Interface(length(panels_2), panels_2)
 
-    panels_3 = square_surface_adaptive_panels(surf_3[1][1], surf_3[1][2], surf_3[1][3], surf_3[1][4], ns, ws, surf_3[2], (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+    panels_3 = square_surface_adaptive_panels(surf_3[1][1], surf_3[1][2], surf_3[1][3], surf_3[1][4], n_quad_max, n_quad_min, surf_3[2], (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
     interface_3 = Interface(length(panels_3), panels_3)
 
     interfaces = [(interface_1, eps_box1, eps_out), (interface_2, eps_box2, eps_out), (interface_3, eps_box2, eps_box1)]

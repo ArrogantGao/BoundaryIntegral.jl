@@ -54,6 +54,12 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
 
     @assert n_adapt_edge <= n_adapt_corner "n_adapt_edge must be less than or equal to n_adapt_corner"
 
+
+    if n_adapt_edge == 0
+        ns, ws = gausslegendre(n_quad_min)
+        return [square_surface_uniform_panel(a, b, c, d, ns, ws, normal)]
+    end
+
     squares = Vector{NTuple{4, NTuple{3, T}}}()
 
     # first handle the edges
@@ -71,7 +77,8 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
 
     for square in squares
         L = norm(square[2] .- square[1])
-        n_quad = ceil(Int, n_quad_min + (n_quad_max - n_quad_min) * (L - L_min) / (L_max - L_min))
+        r = (L_max == L_min) ? 1 : (L - L_min) / (L_max - L_min)
+        n_quad = ceil(Int, n_quad_min + (n_quad_max - n_quad_min) * r)
         ns, ws = gausslegendre(n_quad)
         push!(panels, square_surface_uniform_panel(square..., ns, ws, normal))
     end

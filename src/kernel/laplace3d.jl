@@ -153,6 +153,21 @@ function laplace3d_D_trg_fmm3d(dielectric_interfaces::DielectricInterfaces{Float
     return LinearMap{Float64}(f, size(targets, 2), n_points)
 end
 
+function laplace3d_D_trg(dielectric_interfaces::DielectricInterfaces{T, 3}, targets::Matrix{T}) where T
+    n_points = num_points(dielectric_interfaces)
+    n_targets = size(targets, 2)
+    weights = all_weights(dielectric_interfaces)
+
+    D = zeros(T, n_targets, n_points)
+    for (i, pointi) in enumerate(eachpoint(dielectric_interfaces))
+        Threads.@threads for j in 1:n_targets
+            trg = (targets[1, j], targets[2, j], targets[3, j])
+            D[j, i] = laplace3d_doublelayer(trg, pointi.point, pointi.normal)
+        end
+    end
+    return D * diagm(weights)
+end
+
 function _laplace3d_pottarg_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, weights::Vector{Float64}, targets::Matrix{Float64}, thresh::Float64)
     n = length(charges)
     m = size(targets, 2)
