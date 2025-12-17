@@ -109,7 +109,7 @@ end
 
 function viz_3d_dielectric_interfaces(dbox::DielectricInterfaces{T, 3}; show_normal::Bool = false) where T
     fig = Figure()
-    ax = Axis3(fig[1, 1])
+    ax = Axis3(fig[1, 1], aspect = :data)
     for (interface, eps_in, eps_out) in dbox.interfaces
         viz_3d_panels!(ax, interface.panels, show_normal = show_normal)
     end

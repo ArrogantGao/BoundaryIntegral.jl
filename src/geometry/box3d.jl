@@ -220,8 +220,8 @@ function single_box3d(Lx::T, Ly::T, Lz::T, nx::Int, ny::Int, nz::Int, n_quad_max
         (nx, ny),
         (nx, ny),
         (ny, nz),
-        (ny, nz),
-        (nx, nz),
+        (nz, ny),
+        (nz, nx),
         (nx, nz)
     ]
 
