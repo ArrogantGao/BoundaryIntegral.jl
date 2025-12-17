@@ -40,6 +40,7 @@ include("geometry/box3d.jl")
 include("utils/greens_identity.jl")
 include("utils/linear_algebra.jl")
 include("utils/corner_singularity.jl")
+include("utils/legendre.jl")
 
 # solvers
 include("solver/dielectric_box2d.jl")

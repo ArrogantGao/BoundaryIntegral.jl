@@ -141,80 +141,6 @@ function _square_surfaces!(squares::Vector{NTuple{4, NTuple{3, T}}}, abcd::NTupl
     return squares
 end
 
-# first try to mesh a single box
-# each surfaces are first divided into n_boxexs * n_boxes sub_surfaces
-function single_box3d(n_boxes::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
-    t1 = one(T)
-    t0 = zero(T)
-
-    vertices = [
-        ( t1,  t1,  t1),  # 1: A
-        (-t1,  t1,  t1),  # 2: B
-        (-t1, -t1,  t1),  # 3: C
-        ( t1, -t1,  t1),  # 4: D
-        ( t1,  t1, -t1),  # 5: E
-        (-t1,  t1, -t1),  # 6: F
-        (-t1, -t1, -t1),  # 7: G
-        ( t1, -t1, -t1),  # 8: H
-    ]
-
-    faces = [
-        (1, 2, 3, 4),  # z = +1  (A B C D)
-        (5, 8, 7, 6),  # z = -1  (E H G F)
-        (8, 5, 1, 4),  # x = +1  (H E A D)
-        (7, 3, 2, 6),  # x = -1  (G C B F)
-        (6, 2, 1, 5),  # y = +1  (F B A E)
-        (7, 8, 4, 3),  # y = -1  (G H D C)
-    ]
-
-    normals = [
-        ( t0,  t0,  t1),  # (1,2,3,4)
-        ( t0,  t0, -t1),  # (5,8,7,6)
-        ( t1,  t0,  t0),  # (8,5,1,4)
-        (-t1,  t0,  t0),  # (7,3,2,6)
-        ( t0,  t1,  t0),  # (6,2,1,5)
-        ( t0, -t1,  t0),  # (7,8,4,3)
-    ]
-
-    panels = Vector{Panel{T, 3}}()
-    for i in 1:6
-        face = faces[i]
-        a, b, c, d = [vertices[j] for j in face]
-        r_ab = b .- a
-        r_ad = d .- a
-        d_ab = r_ab ./ n_boxes
-        d_ad = r_ad ./ n_boxes
-        normal = normals[i]
-        for face_idx in 1:n_boxes
-            for face_idy in 1:n_boxes
-                af = a .+ d_ab .* (face_idx - 1) .+ d_ad .* (face_idy - 1)
-                bf = af .+ d_ab
-                cf = af .+ d_ab .+ d_ad
-                df = af .+ d_ad
-
-                is_edge_mut = [false, false, false, false]
-                is_corner_mut = [false, false, false, false]
-
-                is_edge_mut[4] = (face_idx == 1)
-                is_edge_mut[2] = (face_idx == n_boxes)
-                is_edge_mut[1] = (face_idy == 1)
-                is_edge_mut[3] = (face_idy == n_boxes)
-
-                is_corner_mut[1] = is_edge_mut[1] && is_edge_mut[4]
-                is_corner_mut[2] = is_edge_mut[1] && is_edge_mut[2]
-                is_corner_mut[3] = is_edge_mut[2] && is_edge_mut[3]
-                is_corner_mut[4] = is_edge_mut[3] && is_edge_mut[4]
-
-                # new_panels = square_surface_adaptive_panels(af, bf, cf, df, ns, ws, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
-                new_panels = square_surface_adaptive_panels(af, bf, cf, df, n_quad_max, n_quad_min, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
-                append!(panels, new_panels)
-            end
-        end
-    end
-
-    return Interface(length(panels), panels)
-end
-
 # generate a cubic box with left front bottom corner at lfd and right upper back corner at rbu
 function cubic_box3d(lfd::NTuple{3, T}, rbu::NTuple{3, T}) where T
     xL, yF, zD = lfd  # left, front, down
@@ -263,4 +189,145 @@ function cubic_box3d(lfd::NTuple{3, T}, rbu::NTuple{3, T}) where T
     ]
 
     return vertices, faces, normals
+end
+
+
+function single_box3d(Lx::T, Ly::T, Lz::T, nx::Int, ny::Int, nz::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+
+    vertices = [
+        ( Lx / 2,  Ly / 2,  Lz / 2),  # 1: A
+        (-Lx / 2,  Ly / 2,  Lz / 2),  # 2: B
+        (-Lx / 2, -Ly / 2,  Lz / 2),  # 3: C
+        ( Lx / 2, -Ly / 2,  Lz / 2),  # 4: D
+        ( Lx / 2,  Ly / 2, -Lz / 2),  # 5: E
+        (-Lx / 2,  Ly / 2, -Lz / 2),  # 6: F
+        (-Lx / 2, -Ly / 2, -Lz / 2),  # 7: G
+        ( Lx / 2, -Ly / 2, -Lz / 2),  # 8: H
+    ]
+
+    faces = [
+        (1, 2, 3, 4),  # z = +1  (A B C D)
+        (5, 8, 7, 6),  # z = -1  (E H G F)
+        (8, 5, 1, 4),  # x = +1  (H E A D)
+        (7, 3, 2, 6),  # x = -1  (G C B F)
+        (6, 2, 1, 5),  # y = +1  (F B A E)
+        (7, 8, 4, 3),  # y = -1  (G H D C)
+    ]
+
+    n_boxes = [
+        (nx, ny),
+        (nx, ny),
+        (ny, nz),
+        (ny, nz),
+        (nx, nz),
+        (nx, nz)
+    ]
+
+    t1 = one(T)
+    t0 = zero(T)
+    normals = [
+        ( t0,  t0,  t1),  # (1,2,3,4)
+        ( t0,  t0, -t1),  # (5,8,7,6)
+        ( t1,  t0,  t0),  # (8,5,1,4)
+        (-t1,  t0,  t0),  # (7,3,2,6)
+        ( t0,  t1,  t0),  # (6,2,1,5)
+        ( t0, -t1,  t0),  # (7,8,4,3)
+    ]
+
+    panels = Vector{Panel{T, 3}}()
+    for i in 1:6
+        face = faces[i]
+        n1, n2 = n_boxes[i]
+        a, b, c, d = [vertices[j] for j in face]
+        r_ab = b .- a
+        r_ad = d .- a
+        d_ab = r_ab ./ n1
+        d_ad = r_ad ./ n2
+        normal = normals[i]
+        for face_idx in 1:n1
+            for face_idy in 1:n2
+                af = a .+ d_ab .* (face_idx - 1) .+ d_ad .* (face_idy - 1)
+                bf = af .+ d_ab
+                cf = af .+ d_ab .+ d_ad
+                df = af .+ d_ad
+
+                is_edge_mut = [false, false, false, false]
+                is_corner_mut = [false, false, false, false]
+
+                is_edge_mut[4] = (face_idx == 1)
+                is_edge_mut[2] = (face_idx == n1)
+                is_edge_mut[1] = (face_idy == 1)
+                is_edge_mut[3] = (face_idy == n2)
+
+                is_corner_mut[1] = is_edge_mut[1] && is_edge_mut[4]
+                is_corner_mut[2] = is_edge_mut[1] && is_edge_mut[2]
+                is_corner_mut[3] = is_edge_mut[2] && is_edge_mut[3]
+                is_corner_mut[4] = is_edge_mut[3] && is_edge_mut[4]
+
+                new_panels = square_surface_adaptive_panels(af, bf, cf, df, n_quad_max, n_quad_min, normal, Tuple(is_edge_mut), Tuple(is_corner_mut), n_adapt_edge, n_adapt_corner)
+                append!(panels, new_panels)
+            end
+        end
+    end
+
+    return Interface(length(panels), panels)
+end
+
+function single_cubic_box3d(n_boxes::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+    return single_box3d(2.0, 2.0, 2.0, n_boxes, n_boxes, n_boxes, n_quad_max, n_quad_min, n_adapt_edge, n_adapt_corner, T)
+end
+
+function dielectric_box3d(eps_box::T, eps_out::T, n_boxes::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+    box = single_cubic_box3d(n_boxes, n_quad_max, n_quad_min, n_adapt_edge, n_adapt_corner, T)
+    return DielectricInterfaces(1, [(box, eps_box, eps_out)])
+end
+
+function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+
+    interfaces = Vector{Tuple{Interface{T, 3}, T, T}}()
+
+    # box1 at left, (0, -1, 0) -> (1, 0, 1), box2 at right, (0, 0, 0) -> (1, 1, 1)
+    square_1 = [
+        ((1.0, -1.0, 1.0), (0.0, -1.0, 1.0), (0.0, 0.0, 1.0), (1.0, 0.0, 1.0)), 
+        ((1.0, -1.0, 0.0), (1.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, -1.0, 0.0)), 
+        ((1.0, 0.0, 0.0), (1.0, -1.0, 0.0), (1.0, -1.0, 1.0), (1.0, 0.0, 1.0)), 
+        ((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, -1.0, 1.0), (0.0, -1.0, 0.0)), 
+        ((0.0, -1.0, 0.0), (0.0, -1.0, 1.0), (1.0, -1.0, 1.0), (1.0, -1.0, 0.0)), 
+        ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 1.0), (0.0, 0.0, 1.0))]
+    square_2 = [
+        ((1.0, 0.0, 1.0), (0.0, 0.0, 1.0), (0.0, 1.0, 1.0), (1.0, 1.0, 1.0)), 
+        ((1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0)), 
+        ((1.0, 1.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0)), 
+        ((0.0, 1.0, 0.0), (0.0, 1.0, 1.0), (0.0, 0.0, 1.0), (0.0, 0.0, 0.0)), 
+        ((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 0.0, 0.0)), 
+        ((0.0, 1.0, 0.0), (1.0, 1.0, 0.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0))]
+    
+    normals = [(0.0, 0.0, 1.0), (0.0, 0.0, -1.0), (1.0, 0.0, 0.0), (-1.0, 0.0, 0.0), (0.0, - 1.0, 0.0), (0.0, 1.0, 0.0)]
+
+    surf_1 = [(square_1[i], normals[i]) for i in (1:5)]
+    surf_2 = [(square_2[i], normals[i]) for i in [1, 2, 3, 4, 6]]
+    surf_3 = (square_1[6], normals[5])
+
+    panels_1 = Vector{Panel{T, 3}}()
+    for surf in surf_1
+        vertices, normal = surf
+        new_panels = square_surface_adaptive_panels(vertices..., n_quad_max, n_quad_min, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+        append!(panels_1, new_panels)
+    end
+    interface_1 = Interface(length(panels_1), panels_1)
+
+    panels_2 = Vector{Panel{T, 3}}()
+    for surf in surf_2
+        vertices, normal = surf
+        new_panels = square_surface_adaptive_panels(vertices..., n_quad_max, n_quad_min, normal, (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+        append!(panels_2, new_panels)
+    end
+    interface_2 = Interface(length(panels_2), panels_2)
+
+    panels_3 = square_surface_adaptive_panels(surf_3[1][1], surf_3[1][2], surf_3[1][3], surf_3[1][4], n_quad_max, n_quad_min, surf_3[2], (true, true, true, true), (true, true, true, true), n_adapt_edge, n_adapt_corner)
+    interface_3 = Interface(length(panels_3), panels_3)
+
+    interfaces = [(interface_1, eps_box1, eps_out), (interface_2, eps_box2, eps_out), (interface_3, eps_box2, eps_box1)]
+
+    return DielectricInterfaces(length(interfaces), interfaces)
 end
