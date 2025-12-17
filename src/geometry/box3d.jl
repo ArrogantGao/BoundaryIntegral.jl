@@ -280,6 +280,11 @@ function dielectric_box3d(eps_box::T, eps_out::T, n_boxes::Int, n_quad_max::Int,
     return DielectricInterfaces(1, [(box, eps_box, eps_out)])
 end
 
+function dielectric_arbitrary_box3d(eps_box::T, eps_out::T, Lx::T, Ly::T, Lz::T, nx::Int, ny::Int, nz::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
+    box = single_box3d(Lx, Ly, Lz, nx, ny, nz, n_quad_max, n_quad_min, n_adapt_edge, n_adapt_corner, T)
+    return DielectricInterfaces(1, [(box, eps_box, eps_out)])
+end
+
 function dielectric_double_box3d(eps_box1::T, eps_box2::T, eps_out::T, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
 
     interfaces = Vector{Tuple{Interface{T, 3}, T, T}}()
