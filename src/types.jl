@@ -4,6 +4,7 @@ struct Panel{T, N}
     points::Vector{NTuple{N, T}}
     normal::NTuple{N, T}
     weights::Vector{T}
+    corners::Vector{NTuple{N, T}}
 end
 Base.show(io::IO, p::Panel{T, N}) where {T, N} = print(io, "Panel in $N-dimensional space, with $(length(p.points)) quadrature points in $T")
 

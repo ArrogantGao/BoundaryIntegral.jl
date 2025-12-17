@@ -95,10 +95,11 @@ function viz_3d_panels!(ax::Axis3, panels::Vector{Panel{T, 3}}; show_normal::Boo
         y_min = minimum(ys)
         z_max = maximum(zs)
         z_min = minimum(zs)
-        # draw a box 
-        # for x in [x_min, x_max], y in [y_min, y_max], z in [z_min, z_max]
-        #     scatter!(ax, [x], [y], [z], color = :red, markersize = 1.5)
-        # end
+
+        # link the corners with lines
+        a, b, c, d = panel.corners
+        lines!(ax, [a[1], b[1], c[1], d[1], a[1]], [a[2], b[2], c[2], d[2], a[2]], [a[3], b[3], c[3], d[3], a[3]], color = :red, linewidth = 0.4)
+
         if show_normal
             nx, ny, nz = 0.2 .* panel.normal
             lines!(ax, xs .+ nx, ys .+ ny, zs .+ nz, color = :black, linewidth = 0.4)

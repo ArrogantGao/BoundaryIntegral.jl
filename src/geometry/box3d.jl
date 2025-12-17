@@ -30,7 +30,9 @@ function square_surface_uniform_panel(a::NTuple{3, T}, b::NTuple{3, T}, c::NTupl
         end
     end
     
-    return Panel(length(ns) * length(ns), points, normal, weights)
+    corners = [a, b, c, d]
+
+    return Panel(length(ns) * length(ns), points, normal, weights, corners)
 end
 
 function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns::Vector{T}, ws::Vector{T}, normal::NTuple{3, T}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, n_adapt_edge::Int, n_adapt_corner::Int) where T
@@ -273,12 +275,8 @@ function single_box3d(Lx::T, Ly::T, Lz::T, nx::Int, ny::Int, nz::Int, n_quad_max
     return Interface(length(panels), panels)
 end
 
-function single_cubic_box3d(n_boxes::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
-    return single_box3d(2.0, 2.0, 2.0, n_boxes, n_boxes, n_boxes, n_quad_max, n_quad_min, n_adapt_edge, n_adapt_corner, T)
-end
-
 function dielectric_box3d(eps_box::T, eps_out::T, n_boxes::Int, n_quad_max::Int, n_quad_min::Int, n_adapt_edge::Int, n_adapt_corner::Int, ::Type{T} = Float64) where T
-    box = single_cubic_box3d(n_boxes, n_quad_max, n_quad_min, n_adapt_edge, n_adapt_corner, T)
+    box = single_box3d(2.0, 2.0, 2.0, n_boxes, n_boxes, n_boxes, n_quad_max, n_quad_min, n_adapt_edge, n_adapt_corner, T)
     return DielectricInterfaces(1, [(box, eps_box, eps_out)])
 end
 

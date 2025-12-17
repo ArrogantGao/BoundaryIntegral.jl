@@ -8,7 +8,7 @@ function straight_line_panel(a::NTuple{2, T}, b::NTuple{2, T}, ns::Vector{T}, ws
     @assert norm(normal) ≈ 1 "Normal is not a unit vector"
     @assert dot(normal, b .- a) < 1e-10 "Normal is not perpendicular to the line segment"
 
-    return Panel(length(ns), points, normal, weights)
+    return Panel(length(ns), points, normal, weights, [a, b])
 end
 
 function straight_line_adaptive_panels(sp::NTuple{2, T}, ep::NTuple{2, T}, ns::Vector{T}, ws::Vector{T}, normal::NTuple{2, T}, n_panels::Int, n_adapt::Int) where T
