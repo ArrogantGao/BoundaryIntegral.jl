@@ -58,6 +58,7 @@ struct PointInfo{T, N}
     interface_idx::Int
     eps_in::T
     eps_out::T
+    corners::Vector{NTuple{N, T}}
 end
 
 struct AllPointsIterator{T, N}
@@ -96,8 +97,9 @@ function Base.iterate(it::AllPointsIterator{T, N}, state = (1, 1, 1, 1)) where {
     point = panel.points[point_idx]
     weight = panel.weights[point_idx]
     normal = panel.normal
+    corners = panel.corners
 
-    info = PointInfo(point, normal, weight, global_idx, interface_idx, eps_in, eps_out)
+    info = PointInfo(point, normal, weight, global_idx, interface_idx, eps_in, eps_out, corners)
 
     return (info, (interface_idx, panel_idx, point_idx + 1, global_idx + 1))
 end

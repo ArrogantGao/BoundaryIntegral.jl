@@ -70,16 +70,14 @@ function square_surface_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTu
     L_ab = norm(b .- a)
     panels = Vector{Panel{T, 3}}()
 
-    L_max = zero(T)
     L_min = L_ab
     for square in squares
-        L_max = max(L_max, norm(square[2] .- square[1]))
         L_min = min(L_min, norm(square[2] .- square[1]))
     end
 
     for square in squares
         L = norm(square[2] .- square[1])
-        r = (L_max == L_min) ? 1 : (L - L_min) / (L_max - L_min)
+        r = (L_ab == L_min) ? 1 : (L - L_min) / (L_ab - L_min)
         n_quad = ceil(Int, n_quad_min + (n_quad_max - n_quad_min) * r)
         ns, ws = gausslegendre(n_quad)
         push!(panels, square_surface_uniform_panel(square..., ns, ws, normal))
