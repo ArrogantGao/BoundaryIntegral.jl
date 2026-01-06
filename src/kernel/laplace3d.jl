@@ -78,6 +78,55 @@ function laplace3d_DT_fmm3d(dielectric_interfaces::DielectricInterfaces{Float64,
     return LinearMap{Float64}(f, n_points, n_points)
 end
 
+function _laplace3d_DT_trg_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, weights::Vector{Float64}, targets::Matrix{Float64}, norms::Matrix{Float64}, thresh::Float64) 
+    n = length(charges)
+    m = size(targets, 2)
+    @assert size(sources) == (3, n)
+    @assert size(weights) == (n,)
+
+    @assert size(norms) == (3, m)
+    eps = thresh
+    vals = lfmm3d(eps, sources, charges = weights .* charges, targets = targets, pgt = 2)
+    gradtarg = vals.gradtarg
+    gradtargn = zeros(Float64, m)
+
+    for i in 1:m
+        gradtargn[i] = dot(norms[:, i], gradtarg[:, i])
+    end
+
+    return - gradtargn ./ 4π
+end
+
+function laplace3d_DT_trg_fmm3d(dielectric_interfaces::DielectricInterfaces{Float64, 3}, targets_interface::DielectricInterfaces{Float64, 3}, thresh::Float64)
+    n_points = num_points(dielectric_interfaces)
+    m_points = num_points(targets_interface)
+
+    sources = zeros(Float64, 3, n_points)
+    weights = zeros(Float64, n_points)
+
+    targets = zeros(Float64, 3, m_points)
+    norms = zeros(Float64, 3, m_points)
+
+    for (i, point) in enumerate(eachpoint(dielectric_interfaces))
+        weights[i] = point.weight
+        sources[1, i] = point.point[1]
+        sources[2, i] = point.point[2]
+        sources[3, i] = point.point[3]
+    end
+
+    for (i, point) in enumerate(eachpoint(targets_interface))
+        targets[1, i] = point.point[1]
+        targets[2, i] = point.point[2]
+        targets[3, i] = point.point[3]
+        norms[1, i] = point.normal[1]
+        norms[2, i] = point.normal[2]
+        norms[3, i] = point.normal[3]
+    end
+
+    f = charges -> _laplace3d_DT_trg_fmm3d(charges, sources, weights, targets, norms, thresh)
+    return LinearMap{Float64}(f, m_points, n_points)
+end
+
 function _laplace3d_D_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Float64}, weights::Vector{Float64}, norms::Matrix{Float64}, thresh::Float64) 
     n = length(weights)
     @assert length(charges) == n
