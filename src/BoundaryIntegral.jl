@@ -41,6 +41,7 @@ include("utils/greens_identity.jl")
 include("utils/linear_algebra.jl")
 include("utils/corner_singularity.jl")
 include("utils/barycentric.jl")
+include("utils/bernstein.jl")
 
 # solvers
 include("solver/dielectric_box2d.jl")
