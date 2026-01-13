@@ -1,37 +1,18 @@
-function laplace2d_singlelayer(src::NTuple{2, T}, trg::NTuple{2, T}) where T
+# defination of the laplace kernel in 2d, potential and gradient
+function laplace2d_pot(src::NTuple{2, T}, trg::NTuple{2, T}) where T
     r2 = sum((src .- trg).^2)
     r = sqrt(r2)
-    return - log(r) / 2π
+    return log(r) / 2π
 end
 
-function laplace2d_singlelayer_interface(interface::Interface{T, 2}, sigma::Vector{T}, trg::NTuple{2, T}) where T
-    t = 0.0
-    i = 0
-    for panel in interface.panels
-        for (point, weight) in zip(panel.points, panel.weights)
-            i += 1
-            t += laplace2d_singlelayer(point, trg) * weight * sigma[i]
-        end
-    end
-    return t
-end
-
-function laplace2d_singlelayer_interface(dielectric_interfaces::DielectricInterfaces{T, 2}, sigma::Vector{T}, trg::NTuple{2, T}) where T
-    t = 0.0
-    for (i, pointi) in enumerate(eachpoint(dielectric_interfaces))
-        t += laplace2d_singlelayer(pointi.point, trg) * pointi.weight * sigma[i]
-    end
-    return t
-end
-
-
-function laplace2d_doublelayer(src::NTuple{2, T}, trg::NTuple{2, T}, norm::NTuple{2, T}) where T
+function laplace2d_grad(src::NTuple{2, T}, trg::NTuple{2, T}, norm::NTuple{2, T}) where T
     r2 = sum((src .- trg).^2)
     inv_r2 = one(T) / r2
 
     return dot(norm, inv_r2 .* (trg .- src)) / 2π
 end
 
+# filling the matrix directly, including S, D and DT
 function laplace2d_D(interface::Interface{T, 2}) where{T}
     n_points = num_points(interface)
     weights = all_weights(interface)
@@ -78,6 +59,7 @@ function laplace2d_DT(interface::Interface{T, 2}) where{T}
     return DT * diagm(weights)
 end
 
+# fmm2d based fast evaluation
 function laplace2d_DT(dielectric_interfaces::DielectricInterfaces{T, 2}) where T
     n_points = num_points(dielectric_interfaces)
     weights = all_weights(dielectric_interfaces)
