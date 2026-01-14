@@ -1,6 +1,6 @@
 module BoundaryIntegral
 
-using LinearAlgebra, OMEinsum
+using LinearAlgebra
 using FastGaussQuadrature, Lebedev
 using Krylov, LinearMaps, Roots
 
@@ -13,7 +13,7 @@ export DielectricInterface
 export PointSource
 
 # kernel functions
-export laplace3d_doublelayer, laplace2d_doublelayer, laplace3d_singlelayer, laplace2d_singlelayer
+export laplace2d_doublelayer, laplace2d_singlelayer
 
 # geometries
 export uniform_box3d, uniform_box2d
@@ -22,20 +22,18 @@ export uniform_box3d, uniform_box2d
 export solve_lu, solve_gmres
 
 # visualization
-export viz_2d_interfaces, viz_2d_dielectric_interfaces
-export viz_3d_squares, viz_3d_interface, viz_3d_dielectric_interfaces
+export viz_2d
 
 # core types
 include("core/panels.jl")
 include("core/sources.jl")
 
-# # kernel functions
-# include("kernel/laplace2d.jl")
+# kernel functions
+include("kernel/laplace2d.jl")
 # include("kernel/laplace3d.jl")
-# include("kernel/kernelabstractions.jl")
 
 # # geometries
-# include("shape/box2d.jl")
+include("shape/box2d.jl")
 # include("shape/box3d.jl")
 
 # # utilities
@@ -50,7 +48,7 @@ include("core/sources.jl")
 # include("solver/dielectric_box3d.jl")
 
 # # visualization
-# include("visualization/viz_2d.jl")
+include("visualization/viz_2d.jl")
 # include("visualization/viz_3d.jl")
 
 end
