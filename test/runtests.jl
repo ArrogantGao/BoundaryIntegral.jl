@@ -1,18 +1,19 @@
 using BoundaryIntegral
-using LinearAlgebra, OMEinsum
+using LinearAlgebra
 using Test
 
 @testset "BoundaryIntegral.jl" begin
 
-    # kernel functions
-    include("kernel/coulomb.jl")
-
-    # geometries
-    include("geometry/single_box.jl")
 
     # utilities
-    include("utils/greens_identity.jl")
+    include("utils/linear_algebra.jl")
+    include("utils/barycentric.jl")
 
-    # solvers
-    include("solver/dielectric_box.jl")
+    # kernel functions
+    include("kernel/laplace2d.jl")
+    include("kernel/laplace3d.jl")
+
+    # solver functions
+    include("solver/dielectric_box2d.jl")
+    include("solver/dielectric_box3d.jl")
 end

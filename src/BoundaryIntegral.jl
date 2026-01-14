@@ -1,53 +1,63 @@
 module BoundaryIntegral
 
-using LinearAlgebra, OMEinsum
-using FastGaussQuadrature, Lebedev
+using LinearAlgebra
+using FastGaussQuadrature
 using Krylov, LinearMaps, Roots
 
 using FMM2D, FMM3D
 
-using KernelAbstractions, Adapt
-include(joinpath(dirname(pathof(KernelAbstractions)), "../examples/utils.jl")) # Load backend
-
 #core types
-export Interface
+export FlatPanel
+export DielectricInterface
+
+export PointSource
 
 # kernel functions
-export laplace3d_doublelayer, laplace2d_doublelayer, laplace3d_singlelayer, laplace2d_singlelayer
+export laplace2d_pot, laplace2d_grad
+export laplace2d_S, laplace2d_D, laplace2d_DT, laplace2d_pottrg
+export laplace2d_S_fmm2d, laplace2d_DT_fmm2d, laplace2d_D_fmm2d, laplace2d_pottrg_fmm2d
 
-# geometries
-export uniform_box3d, uniform_box2d
+export laplace3d_pot, laplace3d_grad
+export laplace3d_S, laplace3d_D, laplace3d_DT, laplace3d_pottrg
+export laplace3d_S_fmm3d, laplace3d_DT_fmm3d, laplace3d_D_fmm3d, laplace3d_pottrg_fmm3d
+
+# shapes
+export single_dielectric_box2d, multi_dielectric_box2d
+export single_dielectric_box3d
+
+# solvers
+export Lhs_dielectric_box2d, Lhs_dielectric_box2d_fmm2d, Rhs_dielectric_box2d
+export Lhs_dielectric_box3d, Lhs_dielectric_box3d_fmm3d, Rhs_dielectric_box3d
 
 # linear algebra
 export solve_lu, solve_gmres
 
 # visualization
-export viz_2d_interfaces, viz_2d_dielectric_interfaces
-export viz_3d_squares, viz_3d_interface, viz_3d_dielectric_interfaces
+export viz_2d, viz_3d
 
-include("types.jl")
+# core types
+include("core/panels.jl")
+include("core/sources.jl")
 
 # kernel functions
 include("kernel/laplace2d.jl")
 include("kernel/laplace3d.jl")
-include("kernel/kernelabstractions.jl")
 
-# geometries
-include("geometry/box2d.jl")
-include("geometry/box3d.jl")
+# # geometries
+include("shape/box2d.jl")
+include("shape/box3d.jl")
 
-# utilities
-include("utils/greens_identity.jl")
+# # utilities
 include("utils/linear_algebra.jl")
 include("utils/corner_singularity.jl")
 include("utils/barycentric.jl")
 include("utils/bernstein.jl")
 
-# solvers
+# # solvers
 include("solver/dielectric_box2d.jl")
 include("solver/dielectric_box3d.jl")
 
-# visualization
+# # visualization
 include("visualization/viz_2d.jl")
 include("visualization/viz_3d.jl")
 
