@@ -12,7 +12,7 @@ struct FlatPanel{T, D} <: AbstractPanel
     gl_xs::Vector{Vector{T}}
     gl_ws::Vector{Vector{T}}
 
-    # quadrature points and weights
+    # quadrature points and weightsnorm(lhs * x - rhs)
     points::Vector{NTuple{D, T}}
     weights::Vector{T}
 end

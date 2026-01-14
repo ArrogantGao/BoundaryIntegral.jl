@@ -8,7 +8,6 @@ FMM2D = "2d63477d-9690-4b75-bcc1-c3461d43fecc"
 FMM3D = "1e13804c-f9b7-11ea-0ef0-29f3b1745df8"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
 Krylov = "ba0b0d4f-ebba-5204-a429-3ac8c609bfb7"
-Lebedev = "c5712dd9-2571-4e23-b661-b4a261421493"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LinearMaps = "7a12625a-238d-50fd-b39a-03d52299707e"
 Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
@@ -26,7 +25,6 @@ FMM3D = "1.0.1"
 FastGaussQuadrature = "1.1.0"
 GLMakie = "0.13.6"
 Krylov = "0.10.2"
-Lebedev = "1.2.0"
 LinearAlgebra = "1.12.0"
 LinearMaps = "3.11.4"
 Roots = "2.2.10"
@@ -34,8 +32,8 @@ SparseMatricesCOO = "0.2.6"
 julia = "1.10, 1.11, 1.12"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "Random"]

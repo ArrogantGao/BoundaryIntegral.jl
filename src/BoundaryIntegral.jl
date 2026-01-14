@@ -1,7 +1,7 @@
 module BoundaryIntegral
 
 using LinearAlgebra
-using FastGaussQuadrature, Lebedev
+using FastGaussQuadrature
 using Krylov, LinearMaps, Roots
 
 using FMM2D, FMM3D
@@ -37,14 +37,13 @@ include("shape/box2d.jl")
 # include("shape/box3d.jl")
 
 # # utilities
-# include("utils/greens_identity.jl")
-# include("utils/linear_algebra.jl")
+include("utils/linear_algebra.jl")
 # include("utils/corner_singularity.jl")
-# include("utils/barycentric.jl")
-# include("utils/bernstein.jl")
+include("utils/barycentric.jl")
+include("utils/bernstein.jl")
 
 # # solvers
-# include("solver/dielectric_box2d.jl")
+include("solver/dielectric_box2d.jl")
 # include("solver/dielectric_box3d.jl")
 
 # # visualization
