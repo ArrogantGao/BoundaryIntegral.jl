@@ -1,3 +1,23 @@
+# temporary panal for 3d rectangle surface panel generation
+struct TempPanel3D{T}
+    a::NTuple{3, T}
+    b::NTuple{3, T}
+    c::NTuple{3, T}
+    d::NTuple{3, T}
+
+    is_a_corner::Bool
+    is_b_corner::Bool
+    is_c_corner::Bool
+    is_d_corner::Bool
+
+    is_ab_edge::Bool
+    is_bc_edge::Bool
+    is_cd_edge::Bool
+    is_da_edge::Bool
+
+    normal::NTuple{3, T}
+end
+
 # mesh a rectangle surface panel with tensor product Gauss-Legendre quadrature points
 function square_surface_uniform_panel(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns::Vector{T}, ws::Vector{T}, normal::NTuple{3, T}) where T
 

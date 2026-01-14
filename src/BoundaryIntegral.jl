@@ -30,7 +30,7 @@ include("core/sources.jl")
 
 # kernel functions
 include("kernel/laplace2d.jl")
-# include("kernel/laplace3d.jl")
+include("kernel/laplace3d.jl")
 
 # # geometries
 include("shape/box2d.jl")

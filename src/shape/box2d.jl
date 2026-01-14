@@ -93,259 +93,180 @@ function single_dielectric_box2d(n_quad::Int, l_panel::T, l_corner::T, eps_in::T
     return single_dielectric_box2d(n_quad, l_panel, l_corner, eps_in, eps_out, T; Lx = Lx, Ly = Ly)
 end
 
-# # constructing boxes
-# function uniform_box2d(n_quad::Int, ::Type{T} = Float64) where T
-#     ns, ws = gausslegendre(n_quad)
-#     t1 = one(T)
-#     t0 = zero(T)
+square = (x, y) -> [(x, y), (x + 1, y), (x + 1, y + 1), (x, y + 1)]
+rect = (x, y, w, h) -> [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
 
-#     panels = Vector{Panel{T, 2}}()
+# vertices in the same box are arranged counter-clockwise, for example: [(0,0), (1,0), (1,1), (0,1)]
+# id of the box is the index of the box in the vector, id of vacuum is 0
+# norm vector points from box with higher id to box with lower id
+function multi_dielectric_box2d(n_quad::Int, l_panel::T, l_corner::T, vec_boxes::Vector{Vector{NTuple{2, T}}}, epses::Vector{T}) where T
+    ns, ws = gausslegendre(n_quad)
+    ns = T.(ns)
+    ws = T.(ws)
 
-#     for (sp, ep, normal) in zip([(-t1, t1), (t1, t1), (t1, -t1), (-t1, -t1)], [(t1, t1), (t1, -t1), (-t1, -t1), (-t1, t1)], [(t0, t1), (t1, t0), (t0, -t1), (-t1, t0)])
-#         push!(panels, straight_line_panel(sp, ep, ns, ws, normal))
-#     end
+    edges = build_edges(vec_boxes)
+    interfaces_dict = Dict{Tuple{Int, Int}, Vector{FlatPanel{T, 2}}}()
+    for (p1, p2, id1, id2, nvec) in edges
+        panels = straight_line_adaptive_panels(p1, p2, ns, ws, nvec, l_panel, l_corner)
+        if haskey(interfaces_dict, (id1, id2))
+            append!(interfaces_dict[(id1, id2)], panels)
+        else
+            interfaces_dict[(id1, id2)] = panels
+        end
+    end
 
-#     return Interface(4, panels)
-# end
+    panels_vec = Vector{FlatPanel{T, 2}}()
+    eps_in_vec = Vector{T}()
+    eps_out_vec = Vector{T}()
+    for (ids, panels) in interfaces_dict
+        id1, id2 = ids
 
+        eps_in = iszero(id1) ? one(T) : epses[id1]
+        eps_out = iszero(id2) ? one(T) : epses[id2]
 
-# # generate uniform sized panels on boundary of a 2d box, each panel has n_quad quadrature points
-# function box2d_uniform_panels(n_panels::Int, n_quad::Int, ::Type{T} = Float64) where T
-#     ns, ws = gausslegendre(n_quad)
-#     t1 = one(T)
-#     t0 = zero(T)
-#     panels = Vector{Panel{T, 2}}()
+        append!(panels_vec, panels)
+        append!(eps_in_vec, fill(eps_in, length(panels)))
+        append!(eps_out_vec, fill(eps_out, length(panels)))
+    end
 
-#     for (sp, ep, normal) in zip([(-t1, t1), (t1, t1), (t1, -t1), (-t1, -t1)], [(t1, t1), (t1, -t1), (-t1, -t1), (-t1, t1)], [(t0, t1), (t1, t0), (t0, -t1), (-t1, t0)])
-#         for i in 1:n_panels
-#             p_start = sp .+ (ep .- sp) .* (i - 1) ./ n_panels
-#             p_end = sp .+ (ep .- sp) .* i ./ n_panels
-#             push!(panels, straight_line_panel(p_start, p_end, ns, ws, normal))
-#         end
-#     end
+    return DielectricInterface(panels_vec, eps_in_vec, eps_out_vec)
+end
 
-#     return Interface(4 * n_panels, panels)
-# end
+function edge_normal(p1, p2)
+    v = [p2[1] - p1[1], p2[2] - p1[2]]
+    n = [v[2], -v[1]]
+    n ./= norm(n)
+    return tuple(n...)
+end
 
-# function box2d_adaptive_panels(n_panels::Int, n_quad::Int, n_adapt::Int, ::Type{T} = Float64) where T
-#     ns, ws = gausslegendre(n_quad)
-#     panels = Vector{Panel{T, 2}}()
+function normalize_edge(p1, p2)
+    return (p1 < p2) ? (p1, p2) : (p2, p1)
+end
 
-#     t1 = one(T)
-#     t0 = zero(T)
+function overlap_segment(p1, p2, p3, p4; tol = 1e-10)
+    v1 = [p2[1] - p1[1], p2[2] - p1[2]]
+    cross1 = abs(det([v1 [p3[1] - p1[1]; p3[2] - p1[2]]]))
+    cross2 = abs(det([v1 [p4[1] - p1[1]; p4[2] - p1[2]]]))
+    if cross1 > tol || cross2 > tol
+        return false, nothing
+    end
 
-#     for (sp, ep, normal) in zip([(-t1, t1), (t1, t1), (t1, -t1), (-t1, -t1)], [(t1, t1), (t1, -t1), (-t1, -t1), (-t1, t1)], [(t0, t1), (t1, t0), (t0, -t1), (-t1, t0)])
+    if abs(v1[1]) >= abs(v1[2])
+        pts = sort!([p1, p2, p3, p4], by = x -> x[1])
+        lo, hi = pts[2], pts[3]
+    else
+        pts = sort!([p1, p2, p3, p4], by = x -> x[2])
+        lo, hi = pts[2], pts[3]
+    end
 
-#         new_panels = straight_line_adaptive_panels(sp, ep, ns, ws, normal, n_panels, n_adapt)
-#         append!(panels, new_panels)
-#     end
+    if (hi[1] - lo[1])^2 + (hi[2] - lo[2])^2 > tol^2
+        return true, (lo, hi)
+    end
+    return false, nothing
+end
 
-#     return Interface(length(panels), panels)
-# end
+function intersect_edges(rect1::Vector{NTuple{2, T}}, rect2::Vector{NTuple{2, T}}) where T
+    for (v11, v12) in zip(rect1, circshift(rect1, -1))
+        for (v21, v22) in zip(rect2, circshift(rect2, -1))
+            overlap, lohi = overlap_segment(v11, v12, v21, v22)
+            if overlap
+                nvec = edge_normal(v21, v22)
+                return true, (lohi[1], lohi[2], nvec)
+            end
+        end
+    end
+    return false, nothing
+end
 
-# # first try a special case: 2 boxes
-# function dbox2d_adaptive_panels(n_panels::Int, n_quad::Int, n_adapt::Int, ::Type{T} = Float64) where T
-#     ns, ws = gausslegendre(n_quad)
-#     panels_1 = Vector{Panel{T, 2}}()
-#     panels_2 = Vector{Panel{T, 2}}()
-#     panels_12 = Vector{Panel{T, 2}}()
+function split_edge_by_overlaps(p1::NTuple{2, T}, p2::NTuple{2, T}, overlaps::Vector{Tuple{NTuple{2, T}, NTuple{2, T}}}; tol = 1e-10) where T
+    if abs(p2[1] - p1[1]) >= abs(p2[2] - p1[2])
+        smin, smax = min(p1[1], p2[1]), max(p1[1], p2[1])
+        proj = x -> x[1]
+    else
+        smin, smax = min(p1[2], p2[2]), max(p1[2], p2[2])
+        proj = x -> x[2]
+    end
 
-#     t1 = one(T)
-#     t0 = zero(T)
+    intervals = Tuple{T, T}[]
+    for (q1, q2) in overlaps
+        lo, hi = sort([proj(q1), proj(q2)])
+        push!(intervals, (lo, hi))
+    end
 
-#     lines_1 = [(t0, -t1), (-t1, -t1), (-t1, t1), (t0, t1)]
-#     norms_1 = [(t0, -t1), (-t1, t0), (t0, t1)]
-#     lines_2 = [(t0, t1), (t1, t1), (t1, -t1), (t0, -t1)]
-#     norms_2 = [(t0, t1), (t1, t0), (t0, -t1)]
+    sort!(intervals, by = i -> i[1])
+    merged = Tuple{T, T}[]
+    for iv in intervals
+        if isempty(merged) || iv[1] > merged[end][2] + tol
+            push!(merged, iv)
+        else
+            merged[end] = (merged[end][1], max(merged[end][2], iv[2]))
+        end
+    end
 
-#     for i in 1:3
-#         append!(panels_1, straight_line_adaptive_panels(lines_1[i], lines_1[i+1], ns, ws, norms_1[i], n_panels, n_adapt))
-#         append!(panels_2, straight_line_adaptive_panels(lines_2[i], lines_2[i+1], ns, ws, norms_2[i], n_panels, n_adapt))
-#     end
+    segments = Tuple{T, T}[]
+    cursor = smin
+    for (lo, hi) in merged
+        if lo - cursor > tol
+            push!(segments, (cursor, lo))
+        end
+        cursor = hi
+    end
+    if smax - cursor > tol
+        push!(segments, (cursor, smax))
+    end
 
-#     append!(panels_12, straight_line_adaptive_panels((t0, t1), (t0, -t1), ns, ws, (-t1, t0), n_panels, n_adapt))
+    res = Tuple{NTuple{2, T}, NTuple{2, T}}[]
+    for (a, b) in segments
+        if abs(p2[1] - p1[1]) >= abs(p2[2] - p1[2])
+            yA = p1[2] + (a - p1[1]) / (p2[1] - p1[1]) * (p2[2] - p1[2])
+            yB = p1[2] + (b - p1[1]) / (p2[1] - p1[1]) * (p2[2] - p1[2])
+            push!(res, ((a, yA), (b, yB)))
+        else
+            xA = p1[1] + (a - p1[2]) / (p2[2] - p1[2]) * (p2[1] - p1[1])
+            xB = p1[1] + (b - p1[2]) / (p2[2] - p1[2]) * (p2[1] - p1[1])
+            push!(res, ((xA, a), (xB, b)))
+        end
+    end
+    return res
+end
 
-#     return [Interface(length(panels_1), panels_1), Interface(length(panels_2), panels_2), Interface(length(panels_12), panels_12)]
-# end
+function build_edges(rects::Vector{Vector{NTuple{2, T}}}) where T
+    edges = Tuple{NTuple{2, T}, NTuple{2, T}, Int, Int, NTuple{2, T}}[]
+    shared_edges = Dict{Tuple{NTuple{2, T}, NTuple{2, T}}, Vector{Int}}()
 
-# square = (x, y) -> [(x, y), (x + 1, y), (x + 1, y + 1), (x, y+1)]
-# rect = (x, y, w, h) -> [(x, y), (x + w, y), (x + w, y + h), (x, y + h)]
+    for i in 1:length(rects) - 1
+        for j in i + 1:length(rects)
+            overlap, lohinvec = intersect_edges(rects[i], rects[j])
+            if overlap
+                p1, p2 = lohinvec[1], lohinvec[2]
+                nvec = lohinvec[3]
+                key = normalize_edge(p1, p2)
+                shared_edges[key] = union(get(shared_edges, key, Int[]), [i, j])
+                push!(edges, (p1, p2, j, i, nvec))
+            end
+        end
+    end
 
-# # vertices in the same box are arranged counter-clockwise, for example: [(0,0), (1,0), (1,1), (0,1)]
-# # id of the box is the index of the box in the vector, id of vacuum is 0
-# # norm vector points from box with higher id to box with lower id
-# function multi_box2d(n_panels::Int, n_quad::Int, n_adapt::Int, vec_boxes::Vector{Vector{NTuple{2, T}}}, ::Type{T} = Float64) where T
-#     ns, ws = gausslegendre(n_quad)
+    for (rid, rect) in enumerate(rects)
+        for (p1, p2) in zip(rect, circshift(rect, 1))
+            key = normalize_edge(p1, p2)
+            nvec = edge_normal(p1, p2)
 
-#     ns = T.(ns)
-#     ws = T.(ws)
+            overlaps = Tuple{NTuple{2, T}, NTuple{2, T}}[]
+            for (k, regs) in shared_edges
+                if rid in regs
+                    overlap, seg = overlap_segment(p1, p2, k[1], k[2])
+                    if overlap
+                        push!(overlaps, seg)
+                    end
+                end
+            end
 
-#     edges = build_edges(vec_boxes)
-#     interfaces_dict = Dict{Tuple{Int, Int}, Interface{T, 2}}()
-#     for (p1, p2, id1, id2, nvec) in edges
-#         if haskey(interfaces_dict, (id1, id2))
-#             append!(interfaces_dict[(id1, id2)].panels, straight_line_adaptive_panels(p1, p2, ns, ws, nvec, n_panels, n_adapt))
-#         else
-#             interfaces_dict[(id1, id2)] = Interface(length(straight_line_adaptive_panels(p1, p2, ns, ws, nvec, n_panels, n_adapt)), straight_line_adaptive_panels(p1, p2, ns, ws, nvec, n_panels, n_adapt))
-#         end
-#     end
-
-#     return interfaces_dict
-# end
-
-# function edge_normal(p1, p2)
-#     v = [p2[1]-p1[1], p2[2]-p1[2]]
-#     n = [v[2], -v[1]]
-#     n ./= norm(n)
-#     return tuple(n...)
-# end
-
-# function normalize_edge(p1, p2)
-#     return (p1 < p2) ? (p1, p2) : (p2, p1)
-# end
-
-# function overlap_segment(p1, p2, p3, p4; tol=1e-10)
-#     v1 = [p2[1]-p1[1], p2[2]-p1[2]]
-#     v2 = [p4[1]-p3[1], p4[2]-p3[2]]
-#     cross1 = abs(det([v1 [p3[1]-p1[1]; p3[2]-p1[2]]]))
-#     cross2 = abs(det([v1 [p4[1]-p1[1]; p4[2]-p1[2]]]))
-#     if cross1 > tol || cross2 > tol
-#         return false, nothing
-#     end
-
-#     if abs(v1[1]) >= abs(v1[2])
-#         pts = sort!([p1, p2, p3, p4], by = x -> x[1])
-#         lo, hi = pts[2], pts[3]
-#     else
-#         pts = sort!([p1, p2, p3, p4], by = x -> x[2])
-#         lo, hi = pts[2], pts[3]
-#     end
-
-#     if (hi[1]-lo[1])^2 + (hi[2]-lo[2])^2 > tol^2
-#         return true, (lo, hi)
-#     else
-#         return false, nothing
-#     end
-# end
-
-# function intersect_edges(rect1::Vector{NTuple{2, T}}, rect2::Vector{NTuple{2, T}}) where T
-#     for (v11, v12) in collect(zip(rect1, circshift(rect1, -1)))
-#         for (v21, v22) in collect(zip(rect2, circshift(rect2, -1)))
-#             # check if the edge (v11, v12) intersects with the edge (v21, v22)
-#             overlap, lohi = overlap_segment(v11, v12, v21, v22)
-#             if overlap
-#                 # determine the normal vector of the edge, the same as outward normal vector of the rect2
-#                 nvec = edge_normal(v21, v22)
-#                 return true, (lohi[1], lohi[2], nvec)
-#             end
-#         end
-#     end
-#     return false, nothing
-# end
-
-# function split_edge_by_overlaps(p1, p2, overlaps; tol=1e-10)
-#     if abs(p2[1]-p1[1]) >= abs(p2[2]-p1[2])
-#         # x dominates
-#         smin, smax = min(p1[1],p2[1]), max(p1[1],p2[1])
-#         proj = x->x[1]
-#     else
-#         # y dominates
-#         smin, smax = min(p1[2],p2[2]), max(p1[2],p2[2])
-#         proj = x->x[2]
-#     end
-
-#     # collect the overlapping intervals
-#     intervals = []
-#     for (q1,q2) in overlaps
-#         lo, hi = sort([proj(q1), proj(q2)])
-#         push!(intervals, (lo,hi))
-#     end
-
-#     # merge the overlapping intervals
-#     sort!(intervals, by=i->i[1])
-#     merged = []
-#     for iv in intervals
-#         if isempty(merged) || iv[1] > merged[end][2] + tol
-#             push!(merged, iv)
-#         else
-#             merged[end] = (merged[end][1], max(merged[end][2], iv[2]))
-#         end
-#     end
-
-#     # find the non-overlapping parts
-#     segments = []
-#     cursor = smin
-#     for (lo,hi) in merged
-#         if lo - cursor > tol
-#             push!(segments,(cursor,lo))
-#         end
-#         cursor = hi
-#     end
-#     if smax - cursor > tol
-#         push!(segments,(cursor,smax))
-#     end
-
-#     # convert back to 2d endpoints
-#     res = []
-#     for (a,b) in segments
-#         if abs(p2[1]-p1[1]) >= abs(p2[2]-p1[2])
-#             # x dominates -> interpolate y
-#             yA = p1[2] + (a-p1[1])/(p2[1]-p1[1])*(p2[2]-p1[2])
-#             yB = p1[2] + (b-p1[1])/(p2[1]-p1[1])*(p2[2]-p1[2])
-#             push!(res, ((a,yA),(b,yB)))
-#         else
-#             # y dominates -> interpolate x
-#             xA = p1[1] + (a-p1[2])/(p2[2]-p1[2])*(p2[1]-p1[1])
-#             xB = p1[1] + (b-p1[2])/(p2[2]-p1[2])*(p2[1]-p1[1])
-#             push!(res, ((xA,a),(xB,b)))
-#         end
-#     end
-#     return res
-# end
-
-
-# function build_edges(rects::Vector{Vector{NTuple{2,T}}}) where T
-#     edges = []
-#     shared_edges = Dict{Tuple{NTuple{2,T},NTuple{2,T}}, Vector{Int}}()
-
-#     # find all shared edges and record them
-#     for i in 1:length(rects)-1
-#         for j in i+1:length(rects)
-#             overlap, lohinvec = intersect_edges(rects[i], rects[j])
-#             if overlap
-#                 p1,p2 = lohinvec[1], lohinvec[2]
-#                 nvec = lohinvec[3]
-#                 key = normalize_edge(p1,p2)
-#                 shared_edges[key] = get(shared_edges,key,Int[]) ∪ [i,j]
-#                 push!(edges, (p1,p2,j,i,nvec))
-#             end
-#         end
-#     end
-
-#     # check the rest edges of each rectangle
-#     for (rid, rect) in enumerate(rects)
-#         for (p1,p2) in zip(rect, circshift(rect,1))
-#             key = normalize_edge(p1,p2)
-#             nvec = edge_normal(p1,p2)
-
-#             # collect the overlapping segments
-#             overlaps = []
-#             for (k,regs) in shared_edges
-#                 if rid in regs
-#                     # match the overlapping of the current edge
-#                     overlap, seg = overlap_segment(p1,p2,k[1],k[2])
-#                     if overlap
-#                         push!(overlaps, seg)
-#                     end
-#                 end
-#             end
-
-#             # split and record the non-overlapping parts
-#             remain = split_edge_by_overlaps(p1,p2,overlaps)
-#             for (q1,q2) in remain
-#                 push!(edges,(q1,q2,rid,0,(-nvec[1], -nvec[2])))
-#             end
-#         end
-#     end
-#     return edges
-# end
+            remain = split_edge_by_overlaps(p1, p2, overlaps)
+            for (q1, q2) in remain
+                push!(edges, (q1, q2, rid, 0, (-nvec[1], -nvec[2])))
+            end
+        end
+    end
+    return edges
+end

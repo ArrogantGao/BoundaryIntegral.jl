@@ -10,5 +10,9 @@ using Test
     include("utils/barycentric.jl")
 
     # kernel functions
-    include("kernel/laplace2d_fmm2d.jl")
+    include("kernel/laplace2d.jl")
+    include("kernel/laplace3d.jl")
+
+    # geometries
+    include("geometry/multi_box2d.jl")
 end

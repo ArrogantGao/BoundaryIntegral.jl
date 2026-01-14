@@ -1,6 +1,7 @@
 using BoundaryIntegral
 import BoundaryIntegral as BI
 using LinearAlgebra, Krylov
+using Random
 using Test
 
 @testset "dielectric_box" begin
@@ -27,4 +28,19 @@ using Test
             @test isapprox(total_flux_gmres + 1.0 / eps_box, 1.0, atol = 1e-3)
         end
     end
+end
+
+@testset "dielectric_box multi_box2d" begin
+    rects = [BI.square(0.0, 0.0), BI.square(1.0, 0.0)]
+    interface = BI.multi_dielectric_box2d(8, 0.2, 0.05, rects, [2.0, 3.0])
+
+    lhs = BI.Lhs_dielectric_box2d(interface)
+    lhs_fmm2d = BI.Lhs_dielectric_box2d_fmm2d(interface, 1e-12)
+    rhs = BI.Rhs_dielectric_box2d(interface, BI.PointSource((0.1, 0.1), 1.0), 5.0)
+
+    x_trial = randn(BI.num_points(interface))
+    @test norm(lhs * x_trial - lhs_fmm2d * x_trial) < 1e-9
+
+    x = BI.solve_lu(lhs, rhs)
+    @test norm(lhs * x - rhs) < 1e-10
 end
