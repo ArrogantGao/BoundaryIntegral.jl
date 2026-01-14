@@ -13,16 +13,27 @@ export DielectricInterface
 export PointSource
 
 # kernel functions
-export laplace2d_doublelayer, laplace2d_singlelayer
+export laplace2d_pot, laplace2d_grad
+export laplace2d_S, laplace2d_D, laplace2d_DT, laplace2d_pottrg
+export laplace2d_S_fmm2d, laplace2d_DT_fmm2d, laplace2d_D_fmm2d, laplace2d_pottrg_fmm2d
 
-# geometries
-export uniform_box3d, uniform_box2d
+export laplace3d_pot, laplace3d_grad
+export laplace3d_S, laplace3d_D, laplace3d_DT, laplace3d_pottrg
+export laplace3d_S_fmm3d, laplace3d_DT_fmm3d, laplace3d_D_fmm3d, laplace3d_pottrg_fmm3d
+
+# shapes
+export single_dielectric_box2d, multi_dielectric_box2d
+export single_dielectric_box3d
+
+# solvers
+export Lhs_dielectric_box2d, Lhs_dielectric_box2d_fmm2d, Rhs_dielectric_box2d
+export Lhs_dielectric_box3d, Lhs_dielectric_box3d_fmm3d, Rhs_dielectric_box3d
 
 # linear algebra
 export solve_lu, solve_gmres
 
 # visualization
-export viz_2d
+export viz_2d, viz_3d
 
 # core types
 include("core/panels.jl")
@@ -34,7 +45,7 @@ include("kernel/laplace3d.jl")
 
 # # geometries
 include("shape/box2d.jl")
-# include("shape/box3d.jl")
+include("shape/box3d.jl")
 
 # # utilities
 include("utils/linear_algebra.jl")
@@ -44,10 +55,10 @@ include("utils/bernstein.jl")
 
 # # solvers
 include("solver/dielectric_box2d.jl")
-# include("solver/dielectric_box3d.jl")
+include("solver/dielectric_box3d.jl")
 
 # # visualization
 include("visualization/viz_2d.jl")
-# include("visualization/viz_3d.jl")
+include("visualization/viz_3d.jl")
 
 end

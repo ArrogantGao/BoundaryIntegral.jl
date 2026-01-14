@@ -6,7 +6,7 @@ using Test
 
 @testset "laplace2d FMM2D comparisons" begin
     Random.seed!(0)
-    interface = BI.single_dielectric_box2d(8, 0.2, 0.05, 5.0, 1.0, Float64)
+    interface = BI.single_dielectric_box2d(1.0, 1.0, 8, 0.2, 0.05, 5.0, 1.0, Float64)
 
     points = NTuple{2, Float64}[]
     normals = NTuple{2, Float64}[]
@@ -54,7 +54,7 @@ end
 
 @testset "laplace2d D * I" begin
     # uni-box
-    interface = BI.single_dielectric_box2d(8, 0.2, 0.05, 5.0, 1.0, Float64)
+    interface = BI.single_dielectric_box2d(1.0, 1.0, 8, 0.2, 0.05, 5.0, 1.0, Float64)
     D_direct = BI.laplace2d_D(interface)
     D_fmm = BI.laplace2d_D_fmm2d(interface, 1e-12)
     weights = BI.all_weights(interface)
@@ -62,7 +62,7 @@ end
     @test dot(abs.(D_fmm * ones(size(D_fmm, 1)) .- 0.5), weights) < 1e-3
 
     # rectangle box
-    interface = BI.single_dielectric_box2d(8, 0.2, 0.05, 5.0, 1.0, Float64; Lx = 2.0, Ly = 3.0)
+    interface = BI.single_dielectric_box2d(2.0, 3.0, 8, 0.2, 0.05, 5.0, 1.0, Float64)
     D_direct = BI.laplace2d_D(interface)
     D_fmm = BI.laplace2d_D_fmm2d(interface, 1e-12)
     weights = BI.all_weights(interface)

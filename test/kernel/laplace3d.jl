@@ -13,6 +13,34 @@ function simple_plane_interface()
     return BI.DielectricInterface([panel], [2.0], [1.0])
 end
 
+@testset "laplace3d kernels on meshed box" begin
+    interface = BI.single_dielectric_box3d(1.2, 0.8, 0.6, 4, 0.4, 0.2, 2.0, 1.0, Float64)
+
+    n = BI.num_points(interface)
+    charges = randn(n)
+    tol = 1e-12
+
+    S_direct = BI.laplace3d_S(interface)
+    S_direct[diagind(S_direct)] .= 0.0
+    targets = zeros(Float64, 3, n)
+    for (i, point) in enumerate(BI.eachpoint(interface))
+        targets[1, i] = point.panel_point.point[1]
+        targets[2, i] = point.panel_point.point[2]
+        targets[3, i] = point.panel_point.point[3]
+    end
+    S_fmm = BI.laplace3d_pottrg_fmm3d(interface, targets, tol) * charges
+    @test norm(S_direct * charges - S_fmm) < 1e-8
+
+    D_direct = BI.laplace3d_D(interface)
+    DT_direct = BI.laplace3d_DT(interface)
+    D_direct[diagind(D_direct)] .= 0.0
+    DT_direct[diagind(DT_direct)] .= 0.0
+    D_fmm = BI.laplace3d_D_fmm3d(interface, tol)
+    DT_fmm = BI.laplace3d_DT_fmm3d(interface, tol)
+    @test norm(D_direct * charges - D_fmm * charges) < 1e-8
+    @test norm(DT_direct * charges - DT_fmm * charges) < 1e-8
+end
+
 function direct_D_trg(points, normals, weights, targets, charges)
     n = length(points)
     m = size(targets, 2)

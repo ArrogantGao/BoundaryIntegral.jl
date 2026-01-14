@@ -13,6 +13,7 @@ using Test
     include("kernel/laplace2d.jl")
     include("kernel/laplace3d.jl")
 
-    # geometries
-    include("geometry/multi_box2d.jl")
+    # solver functions
+    include("solver/dielectric_box2d.jl")
+    include("solver/dielectric_box3d.jl")
 end

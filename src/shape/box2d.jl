@@ -1,9 +1,11 @@
 # temporary panel for 2d straight line panel generation
 struct TempPanel2D{T}
     a::NTuple{2, T}
-    is_a_corner::Bool
     b::NTuple{2, T}
+
+    is_a_corner::Bool
     is_b_corner::Bool
+
     normal::NTuple{2, T}
 end
 
@@ -31,7 +33,7 @@ function divide_temp_panel2d(tpl::TempPanel2D{T}, n_divide::Int) where T
         p_end = tpl.a .+ (tpl.b .- tpl.a) .* i ./ n_divide
         is_corner_left = (i == 1) ? tpl.is_a_corner : false
         is_corner_right = (i == n_divide) ? tpl.is_b_corner : false
-        panels[i] = TempPanel2D(p_start, is_corner_left, p_end, is_corner_right, tpl.normal)
+        panels[i] = TempPanel2D(p_start, p_end, is_corner_left, is_corner_right, tpl.normal)
     end
 
     return panels
@@ -45,7 +47,7 @@ function straight_line_adaptive_panels(sp::NTuple{2, T}, ep::NTuple{2, T}, ns::V
     n_divide_rough = ceil(Int, l_line / l_panel)
 
     # this gives a rough division
-    rough_panels = divide_temp_panel2d(TempPanel2D(sp, true, ep, true, normal), n_divide_rough)
+    rough_panels = divide_temp_panel2d(TempPanel2D(sp, ep, true, true, normal), n_divide_rough)
     fine_panels = Vector{TempPanel2D{T}}()
 
     while !isempty(rough_panels)
@@ -75,7 +77,7 @@ function straight_line_adaptive_panels(sp::NTuple{2, T}, ep::NTuple{2, T}, ns::V
     return panels
 end
 
-function single_dielectric_box2d(n_quad::Int, l_panel::T, l_corner::T, eps_in::T, eps_out::T, ::Type{T} = Float64; Lx::T = one(T), Ly::T = one(T)) where T
+function single_dielectric_box2d(Lx::T, Ly::T, n_quad::Int, l_panel::T, l_corner::T, eps_in::T, eps_out::T, ::Type{T} = Float64) where T
     ns, ws = gausslegendre(n_quad)
     hx = Lx / 2
     hy = Ly / 2
@@ -87,10 +89,6 @@ function single_dielectric_box2d(n_quad::Int, l_panel::T, l_corner::T, eps_in::T
 
     return DielectricInterface(panels, fill(eps_in, length(panels)), fill(eps_out, length(panels)))
 
-end
-
-function single_dielectric_box2d(n_quad::Int, l_panel::T, l_corner::T, eps_in::T, eps_out::T, Lx::T, Ly::T) where T
-    return single_dielectric_box2d(n_quad, l_panel, l_corner, eps_in, eps_out, T; Lx = Lx, Ly = Ly)
 end
 
 square = (x, y) -> [(x, y), (x + 1, y), (x + 1, y + 1), (x, y + 1)]

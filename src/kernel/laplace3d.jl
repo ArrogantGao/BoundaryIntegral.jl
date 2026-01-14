@@ -97,7 +97,7 @@ function _laplace3d_DT_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{F
         gradn[i] = dot(norms[:, i], grad[:, i])
     end
 
-    return gradn ./ 4π
+    return - gradn ./ 4π
 end
 
 function laplace3d_DT_fmm3d(interface::DielectricInterface{P, Float64}, thresh::Float64) where {P <: AbstractPanel}
@@ -133,7 +133,7 @@ function _laplace3d_D_fmm3d(charges::AbstractVector{Float64}, sources::Matrix{Fl
     end
 
     vals = lfmm3d(thresh, sources, dipvecs = dipvecs, pg = 1)
-    return vals.pot ./ 4π
+    return - vals.pot ./ 4π
 end
 
 function laplace3d_D_fmm3d(interface::DielectricInterface{P, Float64}, thresh::Float64) where {P <: AbstractPanel}
