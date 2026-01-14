@@ -19,7 +19,7 @@ struct TempPanel3D{T}
 end
 
 # mesh a rectangle surface panel with tensor product Gauss-Legendre quadrature points
-function rect_panel3d_discretize(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns_x::Vector{T}, ns_y::Vector{T}, ws_x::Vector{T}, ws_y::Vector{T}, normal::NTuple{3, T}) where T
+function rect_panel3d_discretize(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns::Vector{T}, ws::Vector{T}, normal::NTuple{3, T}) where T
 
     # check edge lengths
     Lab = norm(b .- a)
@@ -35,24 +35,23 @@ function rect_panel3d_discretize(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, 
     cc = (a .+ b .+ c .+ d) ./ 4
 
     points = Vector{NTuple{3, T}}()
-    for i in 1:length(ns_x)
-        for j in 1:length(ns_y)
-            # p = a .+ e_ab .* (ns[i] .+ 1) ./ 2 .* Lab .+ e_bc .* (ns[j] .+ 1) ./ 2 .* Lbc
-            p = cc .+ (b .- a) .* (ns_x[i] / 2) .+ (d .- a) .* (ns_y[j] / 2)
+    for i in 1:length(ns)
+        for j in 1:length(ns)
+            p = cc .+ (b .- a) .* (ns[i] / 2) .+ (d .- a) .* (ns[j] / 2)
             push!(points, p)
         end
     end    
 
     weights = Vector{T}()
-    for i in 1:length(ns_x)
-        for j in 1:length(ns_y)
-            push!(weights, ws_x[i] * ws_y[j] * Lab * Lbc / 4)
+    for i in 1:length(ns)
+        for j in 1:length(ns)
+            push!(weights, ws[i] * ws[j] * Lab * Lbc / 4)
         end
     end
     
     corners = [a, b, c, d]
 
-    return FlatPanel(normal, corners, [length(ns_x), length(ns_y)], [ns_x, ns_y], [ws_x, ws_y], points, weights)
+    return FlatPanel(normal, corners, length(ns), ns, ws, points, weights)
 end
 
 function divide_temp_panel3d(tpl::TempPanel3D{T}, n_divide_x::Int, n_divide_y::Int) where T
@@ -90,7 +89,7 @@ function divide_temp_panel3d(tpl::TempPanel3D{T}, n_divide_x::Int, n_divide_y::I
 end
 
 # l_panel is the maximum length of a none-corner panel, l_ec is the maximum length of a edge-corner panel
-function rect_panel3d_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns_x::Vector{T}, ns_y::Vector{T}, ws_x::Vector{T}, ws_y::Vector{T}, normal::NTuple{3, T}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, l_panel::T, l_ec::T) where T
+function rect_panel3d_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, T}, d::NTuple{3, T}, ns::Vector{T}, ws::Vector{T}, normal::NTuple{3, T}, is_edge::NTuple{4, Bool}, is_corner::NTuple{4, Bool}, l_panel::T, l_ec::T) where T
     Lab = norm(b .- a)
     Lda = norm(a .- d)
     n_divide_x = ceil(Int, Lab / l_panel)
@@ -118,7 +117,7 @@ function rect_panel3d_adaptive_panels(a::NTuple{3, T}, b::NTuple{3, T}, c::NTupl
 
     panels = Vector{FlatPanel{T, 3}}()
     for tpl in fine
-        push!(panels, rect_panel3d_discretize(tpl.a, tpl.b, tpl.c, tpl.d, ns_x, ns_y, ws_x, ws_y, tpl.normal))
+        push!(panels, rect_panel3d_discretize(tpl.a, tpl.b, tpl.c, tpl.d, ns, ws, tpl.normal))
     end
 
     return panels
@@ -165,8 +164,8 @@ function single_dielectric_box3d(Lx::T, Ly::T, Lz::T, n_quad::Int, l_panel::T, l
         normal = normals[i]
         append!(panels, rect_panel3d_adaptive_panels(
             a, b, c, d,
-            ns, ns,
-            ws, ws,
+            ns,
+            ws,
             normal,
             (true, true, true, true),
             (true, true, true, true),

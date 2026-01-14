@@ -8,6 +8,7 @@ using Test
     # utilities
     include("utils/linear_algebra.jl")
     include("utils/barycentric.jl")
+    include("utils/quad_order.jl")
 
     # kernel functions
     include("kernel/laplace2d.jl")

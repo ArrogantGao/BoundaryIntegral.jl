@@ -4,17 +4,12 @@ using LinearAlgebra
 using Random
 using Test
 
-function simple_plane_interface()
-    normal = (0.0, 0.0, 1.0)
-    corners = [(-0.5, -0.5, 0.0), (0.5, -0.5, 0.0), (0.5, 0.5, 0.0), (-0.5, 0.5, 0.0)]
-    points = copy(corners)
-    weights = fill(1.0, length(points))
-    panel = BI.FlatPanel(normal, corners, [2, 2], [[-1.0, 1.0], [-1.0, 1.0]], [[1.0, 1.0], [1.0, 1.0]], points, weights)
-    return BI.DielectricInterface([panel], [2.0], [1.0])
+function box3d_interface()
+    return BI.single_dielectric_box3d(1.2, 0.8, 0.6, 4, 0.4, 0.2, 2.0, 1.0, Float64)
 end
 
 @testset "laplace3d kernels on meshed box" begin
-    interface = BI.single_dielectric_box3d(1.2, 0.8, 0.6, 4, 0.4, 0.2, 2.0, 1.0, Float64)
+    interface = box3d_interface()
 
     n = BI.num_points(interface)
     charges = randn(n)
@@ -58,7 +53,7 @@ end
 
 @testset "laplace3d FMM3D comparisons" begin
     Random.seed!(0)
-    interface = simple_plane_interface()
+    interface = box3d_interface()
 
     points = NTuple{3, Float64}[]
     normals = NTuple{3, Float64}[]

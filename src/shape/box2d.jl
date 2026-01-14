@@ -19,7 +19,7 @@ function line_panel2d_discretize(a::NTuple{2, T}, b::NTuple{2, T}, ns::Vector{T}
     @assert norm(normal) ≈ 1 "Normal is not a unit vector"
     @assert dot(normal, b .- a) < 1e-10 "Normal is not perpendicular to the line segment"
 
-    return FlatPanel(normal, [a, b], [length(ns)], [ns], [ws], points, weights)
+    return FlatPanel(normal, [a, b], length(ns), ns, ws, points, weights)
 end
 
 # divide the panel into two smaller panels
