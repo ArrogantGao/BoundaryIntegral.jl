@@ -49,7 +49,7 @@ include("shape/box3d.jl")
 
 # # utilities
 include("utils/linear_algebra.jl")
-# include("utils/corner_singularity.jl")
+include("utils/corner_singularity.jl")
 include("utils/barycentric.jl")
 include("utils/bernstein.jl")
 
