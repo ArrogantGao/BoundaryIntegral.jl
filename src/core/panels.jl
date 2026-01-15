@@ -7,10 +7,10 @@ struct FlatPanel{T, D} <: AbstractPanel
     normal::NTuple{D, T}
     corners::Vector{NTuple{D, T}} # corners are arranged in a anti-clockwise order (lb, rb, rt, lt)
 
-    # quadrature information (D-1 dimensional)
-    n_quad::Vector{Int}
-    gl_xs::Vector{Vector{T}}
-    gl_ws::Vector{Vector{T}}
+    # quadrature information (same order in each tangential direction)
+    n_quad::Int
+    gl_xs::Vector{T}
+    gl_ws::Vector{T}
 
     # quadrature points and weightsnorm(lhs * x - rhs)
     points::Vector{NTuple{D, T}}
