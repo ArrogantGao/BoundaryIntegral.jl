@@ -55,8 +55,8 @@ function rect_panel3d_discretize(a::NTuple{3, T}, b::NTuple{3, T}, c::NTuple{3, 
 end
 
 function divide_temp_panel3d(tpl::TempPanel3D{T}, n_divide_x::Int, n_divide_y::Int) where T
-    @assert n_divide_x >= 2 "n_divide_x must be greater than or equal to 2"
-    @assert n_divide_y >= 2 "n_divide_y must be greater than or equal to 2"
+    # @assert n_divide_x >= 2 "n_divide_x must be greater than or equal to 2"
+    # @assert n_divide_y >= 2 "n_divide_y must be greater than or equal to 2"
 
     panels = Vector{TempPanel3D{T}}(undef, n_divide_x * n_divide_y) # the panels are arranged in a row-major order
 

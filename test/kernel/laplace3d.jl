@@ -107,3 +107,22 @@ end
     D_trg_fmm = BI.laplace3d_D_trg_fmm3d(interface, targets_off, tol) * charges
     @test norm(D_trg_direct - D_trg_fmm) < 5e-9
 end
+
+@testset "laplace3d box flux convergence" begin
+    src = (0.1, 0.1, 0.1)
+    n_quads = (2, 4, 6)
+    errs = Float64[]
+
+    for n_quad in n_quads
+        interface = BI.single_dielectric_box3d(1.0, 1.0, 1.0, n_quad, 0.5, 0.3, 2.0, 1.0, Float64)
+        flux = 0.0
+        for p in BI.eachpoint(interface)
+            flux += BI.laplace3d_grad(src, p.panel_point.point, p.panel_point.normal) * p.panel_point.weight
+        end
+        push!(errs, abs(flux - 1.0))
+    end
+
+    @test errs[2] <= errs[1]
+    @test errs[3] <= errs[2]
+    @test errs[3] < 1e-8
+end

@@ -1,6 +1,8 @@
 module BoundaryIntegral
 
 using LinearAlgebra
+using BlockArrays, BlockSparseArrays
+using SparseArrays
 using FastGaussQuadrature
 using Krylov, LinearMaps, Roots
 
@@ -20,6 +22,7 @@ export laplace2d_S_fmm2d, laplace2d_DT_fmm2d, laplace2d_D_fmm2d, laplace2d_pottr
 export laplace3d_pot, laplace3d_grad
 export laplace3d_S, laplace3d_D, laplace3d_DT, laplace3d_pottrg
 export laplace3d_S_fmm3d, laplace3d_DT_fmm3d, laplace3d_D_fmm3d, laplace3d_pottrg_fmm3d
+export laplace3d_DT_fmm3d_corrected
 
 # shapes
 export single_dielectric_box2d, multi_dielectric_box2d
@@ -42,6 +45,7 @@ include("core/sources.jl")
 # kernel functions
 include("kernel/laplace2d.jl")
 include("kernel/laplace3d.jl")
+include("kernel/laplace3d_near.jl")
 
 # # geometries
 include("shape/box2d.jl")

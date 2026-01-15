@@ -42,6 +42,34 @@ function Lhs_dielectric_box3d_fmm3d(interface::DielectricInterface{P, T}, tol::F
     return Lhs
 end
 
+# linear operator for the corrected DT kernel
+function Lhs_dielectric_box3d_fmm3d_corrected(interface::DielectricInterface{P, Float64}, fmm_tol::Float64, up_tol::Float64, max_order::Int, l_min::Float64) where {P <: AbstractPanel}
+    n_points = num_points(interface)
+    D_transpose = laplace3d_DT_fmm3d_corrected(interface, fmm_tol, up_tol, max_order, l_min)
+
+    function apply_operator(charges::AbstractVector{Float64})
+        y = D_transpose * charges
+
+        offset = 0
+        for i in 1:length(interface.panels)
+            panel = interface.panels[i]
+            eps_in = interface.eps_in[i]
+            eps_out = interface.eps_out[i]
+            n_pts = num_points(panel)
+            t = 0.5 * (eps_out + eps_in) / (eps_out - eps_in)
+            for j in 1:n_pts
+                y[offset + j] += t * charges[offset + j]
+            end
+            offset += n_pts
+        end
+
+        return y
+    end
+
+    return LinearMap{Float64}(apply_operator, n_points, n_points)
+end
+
+
 function Rhs_dielectric_box3d(interface::DielectricInterface{P, T}, ps::PointSource{T, 3}, eps_src::T) where {P <: AbstractPanel, T}
     src = ps.point
     q = ps.charge
