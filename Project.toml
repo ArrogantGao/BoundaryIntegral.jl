@@ -4,8 +4,6 @@ version = "1.0.0-DEV"
 authors = ["Xuanzhao Gao <xgao@flatironinstitute.org> and contributors"]
 
 [deps]
-BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
-BlockSparseArrays = "2c9a651f-6452-4ace-a6ac-809f4280fbb4"
 FMM2D = "2d63477d-9690-4b75-bcc1-c3461d43fecc"
 FMM3D = "1e13804c-f9b7-11ea-0ef0-29f3b1745df8"
 FastGaussQuadrature = "442a2c76-b920-505d-bb47-c5924d526838"
@@ -23,8 +21,6 @@ GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
 GLMakieExt = ["GLMakie"]
 
 [compat]
-BlockArrays = "1.9.3"
-BlockSparseArrays = "0.10.17"
 FMM2D = "0.2.0"
 FMM3D = "1.0.1"
 FastGaussQuadrature = "1.1.0"

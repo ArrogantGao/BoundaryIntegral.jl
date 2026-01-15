@@ -1,7 +1,6 @@
 module BoundaryIntegral
 
 using LinearAlgebra
-using BlockArrays, BlockSparseArrays
 using SparseArrays
 using FastGaussQuadrature
 using Krylov, LinearMaps, Roots
