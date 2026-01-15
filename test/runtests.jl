@@ -13,6 +13,7 @@ using Test
     # kernel functions
     include("kernel/laplace2d.jl")
     include("kernel/laplace3d.jl")
+    include("kernel/laplace3d_upsampled.jl")
 
     # solver functions
     include("solver/dielectric_box2d.jl")

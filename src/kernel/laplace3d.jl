@@ -42,6 +42,60 @@ function laplace3d_DT(interface::DielectricInterface{P, T}) where {P <: Abstract
     return DT * diagm(weights)
 end
 
+function laplace3d_DT_panel(panel_src::FlatPanel{T, 3}, panel_trg::FlatPanel{T, 3}) where T
+
+    np_src = num_points(panel_src)
+    np_trg = num_points(panel_trg)
+
+    DT = zeros(T, np_trg, np_src)
+    for (i, pointi) in enumerate(eachpoint(panel_src))
+        for (j, pointj) in enumerate(eachpoint(panel_trg))
+            DT[j, i] = laplace3d_grad(pointi.point, pointj.point, pointj.normal)
+        end
+    end
+    return DT * diagm(panel_src.weights)
+end
+
+# this function generate a block of the correction matrix
+function laplace3d_DT_panel_upsampled(panel_src::FlatPanel{T, 3}, panel_trg::FlatPanel{T, 3}, n_up::Int) where T
+    ns_up, ws_up = gausslegendre(n_up)
+    ns_up = T.(ns_up)
+    ws_up = T.(ws_up)
+
+    ns0 = panel_src.gl_xs
+    ws0 = panel_src.gl_ws
+
+    M_up = interp_matrix_2d_gl_tensor(ns0, ws0, ns0, ws0, ns_up, ns_up)
+
+    a, b, c, d = panel_src.corners
+    cc = (a .+ b .+ c .+ d) ./ 4
+    Lx = norm(b .- a)
+    Ly = norm(d .- a)
+
+    weights_up = Vector{T}(undef, n_up * n_up)
+    points_up = Vector{NTuple{3, T}}(undef, n_up * n_up)
+    idx = 1
+    for j in 1:n_up
+        for i in 1:n_up
+            points_up[idx] = cc .+ (b .- a) .* (ns_up[i] / 2) .+ (d .- a) .* (ns_up[j] / 2)
+            weights_up[idx] = ws_up[i] * ws_up[j] * Lx * Ly / 4
+            idx += 1
+        end
+    end
+
+    np_trg = num_points(panel_trg)
+    D_up_trg = zeros(T, np_trg, n_up * n_up)
+    for (ti, point_trg) in enumerate(eachpoint(panel_trg))
+        for ui in 1:length(points_up)
+            D_up_trg[ti, ui] = laplace3d_grad(points_up[ui], point_trg.point, point_trg.normal)
+        end
+    end
+
+    DT_up = D_up_trg * diagm(weights_up) * M_up
+
+    return DT_up
+end
+
 function laplace3d_D(interface::DielectricInterface{P, T}) where {P <: AbstractPanel, T}
     n_points = num_points(interface)
     weights = all_weights(interface)
