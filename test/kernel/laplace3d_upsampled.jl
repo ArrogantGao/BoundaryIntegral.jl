@@ -62,3 +62,48 @@ using Test
         @test err_direct <= 40 * atol
     end
 end
+
+@testset "laplace3d DT panel direct integral" begin
+    ns, ws = gausslegendre(5)
+    ns = Float64.(ns)
+    ws = Float64.(ws)
+
+    a = (-0.4, -0.2, 0.1)
+    b = (0.6, -0.2, 0.1)
+    c = (0.6, 0.8, 0.1)
+    d = (-0.4, 0.8, 0.1)
+    normal_src = (0.0, 0.0, 1.0)
+    panel_src = BI.rect_panel3d_discretize(a, b, c, d, ns, ws, normal_src)
+
+    a2 = (-0.6, -0.4, 0.7)
+    b2 = (0.7, -0.4, 0.7)
+    c2 = (0.7, 0.9, 0.7)
+    d2 = (-0.6, 0.9, 0.7)
+    normal_trg = (0.0, 0.0, 1.0)
+    panel_trg = BI.rect_panel3d_discretize(a2, b2, c2, d2, ns, ws, normal_trg)
+
+    function density(points)
+        rho = Vector{Float64}(undef, length(points))
+        for i in 1:length(points)
+            p = points[i]
+            rho[i] = 0.3 + p[1] - 0.5 * p[2] + 0.2 * p[3]
+        end
+        return rho
+    end
+
+    rho_src = density(panel_src.points)
+    DT_panel = BI.laplace3d_DT_panel(panel_src, panel_trg)
+    vals_panel = DT_panel * rho_src
+
+    np_trg = BI.num_points(panel_trg)
+    vals_direct = zeros(Float64, np_trg)
+    for (j, trg_point) in enumerate(BI.eachpoint(panel_trg))
+        acc = 0.0
+        for (i, src_point) in enumerate(BI.eachpoint(panel_src))
+            acc += BI.laplace3d_grad(src_point.point, trg_point.point, trg_point.normal) * panel_src.weights[i] * rho_src[i]
+        end
+        vals_direct[j] = acc
+    end
+
+    @test norm(vals_panel - vals_direct, Inf) < 1e-12
+end
