@@ -4,6 +4,7 @@ using LinearAlgebra
 using SparseArrays
 using FastGaussQuadrature
 using Krylov, LinearMaps, Roots
+using NearestNeighbors
 
 using FMM2D, FMM3D
 

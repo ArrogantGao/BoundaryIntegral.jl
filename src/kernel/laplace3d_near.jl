@@ -56,23 +56,32 @@ end
 # if one of the panels is smaller than l_min, no correction is needed
 function build_neighbor_list(interface::DielectricInterface{P, T}, max_order::Int, l_min::T, atol::T) where {P <: AbstractPanel, T}
     neighbor_list = Dict{Tuple{Int, Int}, Int}()
+    n_panels = length(interface.panels)
+    centers = Matrix{T}(undef, 3, n_panels)
+    lengths = Vector{T}(undef, n_panels)
+    n_quads = Vector{Int}(undef, n_panels)
+
+    for (i, panel) in enumerate(interface.panels)
+        c_panel = (panel.corners[1] .+ panel.corners[2] .+ panel.corners[3] .+ panel.corners[4]) ./ 4
+        @views centers[:, i] .= c_panel
+        lengths[i] = max(norm(panel.corners[1] .- panel.corners[2]), norm(panel.corners[2] .- panel.corners[3]))
+        n_quads[i] = panel.n_quad
+    end
+
+    tree = KDTree(centers)
 
     for (i, paneli) in enumerate(interface.panels)
-        l_i = max(norm(paneli.corners[1] .- paneli.corners[2]), norm(paneli.corners[2] .- paneli.corners[3]))
-        for (j, panelj) in enumerate(interface.panels)
+        l_i = lengths[i]
+        l_i <= l_min && continue
+        n_quad_i = n_quads[i]
+        r_i = 5 * l_i / n_quad_i
+        nearby = inrange(tree, centers[:, i], r_i)
+
+        for j in nearby
             i == j && continue
-
-            l_j = max(norm(panelj.corners[1] .- panelj.corners[2]), norm(panelj.corners[2] .- panelj.corners[3]))
-
-            (l_i <= l_min || l_j <= l_min) && continue
-
-            n_quad_i = paneli.n_quad
-            c_panelj = (panelj.corners[1] .+ panelj.corners[2] .+ panelj.corners[3] .+ panelj.corners[4]) ./ 4
-            order_i = check_quad_order3d(paneli, c_panelj, atol, max_order)
-
-            if order_i > n_quad_i
-                neighbor_list[(i, j)] = order_i
-            end
+            lengths[j] <= l_min && continue
+            order_i = check_quad_order3d(paneli, (centers[1, j], centers[2, j], centers[3, j]), atol, max_order)
+            order_i > n_quad_i && (neighbor_list[(i, j)] = order_i)
         end
     end
 
