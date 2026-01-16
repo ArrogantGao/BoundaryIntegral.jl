@@ -1,3 +1,19 @@
+function legendre_p(n::Int, x)
+    if n == 0
+        return one(x)
+    elseif n == 1
+        return x
+    end
+    p_nm2 = one(x)
+    p_nm1 = x
+    for k in 2:n
+        p_n = ((2 * k - 1) * x * p_nm1 - (k - 1) * p_nm2) / k
+        p_nm2 = p_nm1
+        p_nm1 = p_n
+    end
+    return p_nm1
+end
+
 function int_laplace3d_grad(n_quad::Int, n_quad_up::Int, panel::FlatPanel{T, 3}, trg::NTuple{3, T}) where T
     ns, ws = gausslegendre(n_quad_up)
     a, b, c, d = panel.corners
@@ -7,7 +23,7 @@ function int_laplace3d_grad(n_quad::Int, n_quad_up::Int, panel::FlatPanel{T, 3},
     val = zeros(T, n_quad + 1, n_quad + 1)
     for i in 0:n_quad
         for j in 0:n_quad
-            f = (x, y) -> x^i * y^j
+            f = (x, y) -> legendre_p(i, x) * legendre_p(j, y)
             val_ij = zero(T)
             for k in 1:n_quad_up
                 for l in 1:n_quad_up
