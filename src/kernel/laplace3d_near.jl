@@ -74,7 +74,7 @@ function build_neighbor_list(interface::DielectricInterface{P, T}, max_order::In
         l_i = lengths[i]
         l_i <= l_min && continue
         n_quad_i = n_quads[i]
-        r_i = 5 * l_i / n_quad_i
+        r_i = 10 * l_i / n_quad_i
         nearby = inrange(tree, centers[:, i], r_i)
 
         for j in nearby
